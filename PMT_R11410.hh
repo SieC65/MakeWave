@@ -1,9 +1,9 @@
 #ifndef PMT_R11410_HH
 #define PMT_R11410_HH
 
+#include <TH1.h>
 #include <TF1.h>
 #include <TSpline.h>
-#include <TString.h>
 #include <TRandom3.h>
 #include "SystemOfUnits.h"
 
@@ -48,8 +48,9 @@ namespace RED
 		//virtual TObject* Clone(const char *newname="") const = 0;
 
 		// OUTPUT INFO
-		virtual void Print (Option_t *option="") const { ; } // Print all PMT parameters
-		virtual void DrawShape (char* title)     const { ; } // Draw SPE shape
+		virtual void Print      (Option_t *option="") const { ; } // Print all PMT parameters
+		virtual void PrintProbs (Option_t *option="") const { ; } // Print probabilities only
+		virtual void DrawShape  (char* title)         const { ; } // Draw SPE shape
 
 		// SETTERS
 		virtual void SetDefaults() = 0; // Default values for all parameters
@@ -62,10 +63,10 @@ namespace RED
 		// Get SPE parameters
 		virtual Double_t GetXmax()         const = 0; // Right point of the domain of definition
 		virtual Double_t GetXmin()         const = 0; // Left point of the domain of definition
-		virtual Double_t GetYmax()         const = 0; // Maximum value of SPE shape
-		virtual Double_t GetYmin()         const = 0; // Minimum value of SPE shape
-		virtual Double_t GetArea()         const = 0; // Pulse area of SPE shape
-		virtual Double_t Eval (Double_t t) const = 0; // Value of SPE shape
+		virtual Double_t GetYmax()         const = 0; // Maximum value of SPE Shape
+		virtual Double_t GetYmin()         const = 0; // Minimum value of SPE Shape
+		virtual Double_t GetArea()         const = 0; // Pulse area of SPE
+		virtual Double_t Eval (Double_t t) const = 0; // Value of SPE Shape at time t
 
 		// Structure for pulse parameters and vector of pulses
 		struct Pulse {
@@ -75,11 +76,11 @@ namespace RED
 		typedef std::vector<struct Pulse> PulseArray;
 
 		// MAIN FUNCTIONS
-		virtual int  Begin (PulseArray &electrons) { return(0); }
-		virtual char OnePhoton (Double_t time, PulseArray &electrons,
-		                        bool fDebug = false) = 0; // Convert photon to pulses
-		virtual int  End (PulseArray &electrons) { return(0); }
-		virtual void Clear (Option_t *option="") { ; }
+		virtual int  Begin     (PulseArray &electrons) { return(0); }
+		virtual void OnePhoton (Double_t *time, PulseArray &Pulse, bool fDebug = false) = 0; // Convert photons to pulses
+		virtual int  End       (PulseArray &electrons) { return(0); }
+		virtual void Clear     (Option_t *option="") { ; }
+		virtual void GenDCR    (Double_t begintime, Double_t endtime, PulseArray& DarkPulse) { ; } // Generate pulses for dark counts
 
 		// Define SPE shape type
 		enum {
@@ -109,8 +110,19 @@ namespace RED
 		virtual TObject* Clone (const char *newname="") const { return 0;}
 
 		// OUTPUT INFO
-		void Print (Option_t *option="") const;
-		void DrawShape (const char* title="SPE Shape");
+		void Print      (Option_t *option="") const;
+		void PrintProbs (Option_t *option="") const;
+		void DrawShape  (const char* title="SPE Shape");
+
+		// Histograms
+		TH1F* TimeHist;      // Delay time from photon hit to pulse
+		TH1F* AmplHist;      // Amplitude of pulse from photon	
+		TH1F* DarkTimeHist;  // Time of dark pulses
+		TH1F* DarkAmplHist;  // Amplitude of dark pulses
+		TH1F *NumPheHist;    // Number of photoelectron created by 1 photon:
+		                     // -1 or -2: 1 or 2 phe in 1dyn
+		                     // +1 or +2: 1 or 2 phe in PC
+		TH1F *PulseAreaHist; // Area under pulse SPE (DPE)
 
 		// SETTERS
 		void SetDefaults();
@@ -134,34 +146,36 @@ namespace RED
 
 		// GETTERS
 		// Get SPE parameters
-		Double_t GetXmax()            const;
-		Double_t GetXmin()            const;
-		Double_t GetYmax()            const;
-		Double_t GetYmin()            const;
-		Double_t GetArea()            const {return fArea_mean;}
-		Double_t GetArea_Sigma()      const {return fArea_sigma;}
-		Double_t GetAmpl()            const {return fAmpl_mean;}
-		Double_t GetAmpl_Sigma()      const {return fAmpl_sigma;}
-		Double_t Eval(Double_t t)     const;
+		Double_t GetXmax()        const;
+		Double_t GetXmin()        const;
+		Double_t GetYmax()        const;
+		Double_t GetYmin()        const;
+		Double_t GetArea()        const {return fArea_mean;}
+		Double_t GetArea_Sigma()  const {return fArea_sigma;}
+		Double_t GetShapeArea()   const {return fShapeArea;}
+		Double_t GetAmpl()        const {return fAmpl_mean;}
+		Double_t GetAmpl_Sigma()  const {return fAmpl_sigma;}
+		Double_t Eval(Double_t t) const;
 		// Get independent PMT parameters
-		Double_t GetQE()              const {return fQE;}
-		Double_t GetDPE_PC()          const {return fDPE_PC;}
-		Double_t GetDPE_1d()          const {return fDPE_1d;}
-		Double_t GetTOFe()            const {return fTOFe_mean;}
-		Double_t GetTOFe_Sigma()      const {return fTOFe_sigma;}
-		Double_t GetQE_1d()           const {return fQE_1d;}
-		Double_t GetGain_PC_1d()      const {return fGain_PC_1d;}
-		Double_t GetGF_1d()           const {return fGF_1d;}
-		Double_t GetTOFe_PC_1d()      const {return fTOFe_PC_1d;}
-		Double_t GetDCR()             const {return fDCR;}
-		Double_t GetAP_cont()         const {return fAP_cont;}
-		Double_t GetAP_peak()         const {return fAP_peak;}
+		Double_t GetQE()          const {return fQE;}
+		Double_t GetDPE_PC()      const {return fDPE_PC;}
+		Double_t GetDPE_1d()      const {return fDPE_1d;}
+		Double_t GetTOFe()        const {return fTOFe_mean;}
+		Double_t GetTOFe_Sigma()  const {return fTOFe_sigma;}
+		Double_t GetQE_1d()       const {return fQE_1d;}
+		Double_t GetGain_PC_1d()  const {return fGain_PC_1d;}
+		Double_t GetGF_1d()       const {return fGF_1d;}
+		Double_t GetTOFe_PC_1d()  const {return fTOFe_PC_1d;}
+		Double_t GetDCR()         const {return fDCR;}
+		Double_t GetAP_cont()     const {return fAP_cont;}
+		Double_t GetAP_peak()     const {return fAP_peak;}
 
 		// MAIN FUNCTIONS
-		int  Begin (PulseArray &electrons);
-		char OnePhoton (Double_t time, PulseArray &electrons, bool fDebug=true);
-		int  End   (PulseArray &electrons);
-		void Clear (Option_t *option="");
+		int  Begin     (PulseArray &electrons);
+		void OnePhoton (Double_t *time, PulseArray &electrons, bool fDebug=true);
+		void GenDCR    (Double_t begintime, Double_t endtime, PulseArray& electrons);
+		int  End       (PulseArray &electrons);
+		void Clear     (Option_t *option="");
 
 	private:
 		// Native parameters
@@ -173,6 +187,7 @@ namespace RED
 		Double_t fDPE_1d;     // Double Photoelectron Emission probability for 1dyn
 		Double_t fArea_mean;  // SPE pulse area
 		Double_t fArea_sigma; //
+		Double_t fShapeArea;  // SPE shape area
 		Double_t fTOFe_mean;  // Time of Flight from cathode to anode
 		Double_t fTOFe_sigma; //
 		Double_t fQE_1d;      // Quantum Efficiency for 1dyn
@@ -184,7 +199,7 @@ namespace RED
 		Double_t fAP_peak;    // Afterpulsing probability, for continuum and peak
 
 		// Auxiliary, actually used in calculation
-		Double_t fAmpl_mean;       // SPE Amplitude
+		Double_t fAmpl_mean;       // SPE Amplitude (nondimensional, relative to SPE Shape)
 		Double_t fAmpl_sigma;      //
 		Double_t fProb_C;          // Prob. of int. in PC
 		Double_t fProb_C1;         // Prob. of 1phe in PC
@@ -196,9 +211,11 @@ namespace RED
 		Double_t fArea_1d_sigma;   // = Area_sigma / Gain_PC_1d
 		Double_t fTOFe_1d_mean;    // Time of Flight e- from 1dyn to anode
 		Double_t fTOFe_1d_sigma;   // 0.5*TOF_sigma    
-		TRandom3 fRND;             //
+		TRandom3 fRND;             // Object for random calculations
 
 		bool fDebug; //some extended info (just for debug)
+
+		// Calculate integral of TSpline object in range (xmin,xmax)
 		Double_t SplineIntegral (TSpline* spline, Double_t xmin, Double_t xmax, Int_t nbins);
 	};
   

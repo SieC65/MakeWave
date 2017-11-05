@@ -4,15 +4,11 @@
 #include <vector>
 
 #include <Rtypes.h>
-#include <TF1.h>
-#include <TSpline.h>
-#include <TH1.h>
 
-#include "SystemOfUnits.h"
 #include "PMT_R11410.hh"
 
-using namespace RED;
-using namespace std;
+//using namespace RED;
+using std::vector;
 
 class MakeWave
 {
@@ -25,20 +21,20 @@ class MakeWave
 			Int_t Num ;      // Number of samples in OutWave
 			Double_t Delay;  // Delay from "0" of abs.time to "0" sample of OutWave
 		};      
-		void SetPMT (PMT* PMTX);
+		void SetPMT (RED::PMT* PMTX);
 		void SetOutWave (const OutWavePar &OWX); // Set OutWave parameters
 		void SetTimeSeq (vector <double> *Tseq); // Set vector of photon arrival times
 		void CreateOutWave ();   // Create OutWave
 		void PrintOutWave ();    // Print all values of output signal
 		void Draw ();            // Draw OutWave
 		vector <double> OutWave; // Output waveform
-		TH1F *NPhe;              // Number of photons created 0, 1 and 2 phe
-		TH1F *PA;                // Area under pulse SPE (DPE)
 	private:
-		PMT *fPMT;
+		RED::PMT *fPMT;
 		OutWavePar fOWX;
 		vector <double> *ftimeseq;
-		Bool_t fisrnd;
+		RED::PMT::PulseArray *PhotonPulse;
+		RED::PMT::PulseArray *DarkPulse;
+		void AddPulseArray (RED::PMT::PulseArray *Pulses);
 };
 
 #endif // MakeWave_H

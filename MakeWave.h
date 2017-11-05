@@ -4,7 +4,7 @@
 #include <Rtypes.h>
 #include <TF1.h>
 #include "SystemOfUnits.h"
-#include <TRandom3.h>
+#include <TRandom.h>
 
 using namespace std;
 using namespace CLHEP;
@@ -27,10 +27,11 @@ class MakeWave
 		Double_t fGain;
 		Int_t fNum;
 		TF1 *fSPE;
-		TF1 fSPEAmplDistr;	//Distribution of SPE amplitude
-		TF1 fSPEDelayDistr;	//Distribution of SPE delay
-	//	TRandom fSPEAmplDistrr;	//Distribution of SPE amplitude
-	//	TRandom fSPEDelayDistrr;	//Distribution of SPE delay
+		TRandom fRND;	//Random generator
+		Double_t fSPEAmpl;
+		Double_t fSPEAmplSigma;
+		Double_t fSPEDelay;
+		Double_t fSPEDelaySigma;
 };
 
 #endif // MakeWave_H

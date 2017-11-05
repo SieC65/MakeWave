@@ -19,8 +19,8 @@ int main() {
 	//Set parameters values
 	Double_t Trig	 		= 0.01;	//Coeff: Trigger for SPE = Trig*SPEAmpl
 	Double_t SPEWidth 		= 10*ns;	//FWHM of SPE gaussian
-	Double_t SPEAmpl 	= (-0.001)*volt;	//Amplitude of SPE gaussian
-	Double_t SPEAmplSigma	= 0.2*(-0.001)*volt;	//Sigma for SPE amplitude
+	Double_t SPEAmpl 		= (-0.001)*volt;	//Amplitude of SPE gaussian
+	Double_t SPEAmplSigma	= 0.2*0.001*volt;	//Sigma for SPE amplitude
 	Double_t SPEDelay		= 20*ns;	//Delay of SPE signal
 	Double_t SPEDelaySigma	= 5*ns;		//Sigma for SPE delay
 	Int_t Num 				= 20;		//Number of samples in OutWave
@@ -50,7 +50,7 @@ int main() {
 	a->SetSPE (SPE, SPEAmpl, SPEAmplSigma, SPEDelay, SPEDelaySigma);	//Set SPE
 	a->SetParams (Num, Delay, Period, Gain);	//Set parameters for OutWave
 	a->SetTimeSeq (&Tseq);			//Set sequence of SPE arrival times
-		vector <double> MeanOutWave;
+/*		vector <double> MeanOutWave;
 		MeanOutWave.resize(Num);
 		for (int i = 1; i < 5; i++) {
 			a->CreateOutWave();				//Create OutWave vector
@@ -66,7 +66,7 @@ int main() {
 		}
 		g2->Draw();
 		c2->WaitPrimitive();
-//	a->CreateOutWave();	//Create OutWave vector
-//	a->Draw();
+*/	a->CreateOutWave();	//Create OutWave vector
+	a->Draw();
 	return 0;
 }

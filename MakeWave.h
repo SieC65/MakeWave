@@ -3,9 +3,14 @@
 #include <vector>
 #include <Rtypes.h>
 #include <TF1.h>
-#include <TRandom.h>
+#include <TRandom3.h>
 #include <TString.h>
-#define mV (volt/1000)
+#include "SystemOfUnits.h"
+#include <TH1.h>
+
+namespace CLHEP {
+	static const double mV = 1.e-3*volt;
+}
 
 using namespace std;
 
@@ -23,17 +28,28 @@ class MakeWave
 			Double_t Delay;			//Delay of SPE signal
 			Double_t DelaySigma;	//Sigma for SPE delay
 			Double_t Domain;		//Domain width of SPE
+			Double_t QE;			//Quantum Efficiency (full)
+			Double_t DPE_PC;		//Double Photoelectron Emission = P(2phe)/(P(2phe)+P(1phe)) for PC
+			Double_t QE_1d;			//Quantum Efficiency for 1dyn (only 1phe)
+			Double_t ArbCurr_1d;	//Current(1d)/Current(PC) for SPE
+			Double_t ArbAmpl_1d;	//Ampl(1d)/Ampl(PC) for SPE
+			Double_t AmplSigma_1d;	//Sigma for amplitude from 1dyn
+			Double_t GF_1d;			//Arb. geometrical factor of 1dyn
+			Double_t QE_1d_ratio;	//auxiliary quantity
+			Double_t Pphe_PC;		//Probability of photoeffect on PC
+			Double_t Pphe_1d;		//Probability of photoeffect on 1dyn for photons passed PC
+			Double_t Ampl_DPE_PC;	//Amplitude of signal from 2phe from PC
 		};
 		//OutWave Parameters
 		struct OutWavePar {
-			Int_t Num ;			//Number of samples in OutWave
-			Double_t Delay;		//Delay from "0" of abs.time to "0" sample of OutWave
 			Double_t Period;	//Time between samples of OutWave
 			Double_t Gain;		//Units of ADC
+			Int_t Num ;			//Number of samples in OutWave
+			Double_t Delay;		//Delay from "0" of abs.time to "0" sample of OutWave
 		};		
-		void SetSPE (SPEPar SPEX);	//Set SPE parameters
-		void SetParams (OutWavePar OWX);	//Set OutWave parameters
-		void SetTimeSeq (vector <double> *Tseq);	//Set vector of SPE's arrival times
+		void SetSPE (const SPEPar &SPEX);	//Set SPE parameters
+		void SetParams (const OutWavePar &OWX);	//Set OutWave parameters
+		void SetTimeSeq (vector <double> *Tseq);	//Set vector of photon arrival times
 		void CreateOutWave ();		//Create OutWave
 		void CreateOutWaveOld();	//Create OutWave (old algorithm)
 		void PrintOutWave ();		//Print all values of output signal
@@ -41,12 +57,14 @@ class MakeWave
 		vector <double> OutWave;	//Output waveform
 		void SetRand(Bool_t isrnd = true);	//Randomize rnd. gen. for SPE params
 		Bool_t GetIsrnd ();					//Return, was randomize set or wasn't
+		TH1F *NPhe;					//Number of photons created 0, 1 and 2 phe
+		TH1F *PA;					//Area under pulse SPE (DPE)
 	private:
 		SPEPar fSPEX;
 		OutWavePar fOWX;
 		vector <double> *ftimeseq;
 		TF1 *fSPE;
-		TRandom fRND;	//Random generator
+		TRandom3 fRND;	//Random generator
 		Bool_t fisrnd;
 };
 

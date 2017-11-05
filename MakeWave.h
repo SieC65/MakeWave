@@ -13,28 +13,40 @@ using std::vector;
 class MakeWave
 {
 	public:
+
 		MakeWave ();
-		// OutWave Parameters
-		struct OutWavePar {
-			Double_t Period; // Time between samples of OutWave
-			Double_t Gain;   // Units of ADC
-			Int_t Num ;      // Number of samples in OutWave
-			Double_t Delay;  // Delay from "0" of abs.time to "0" sample of OutWave
-		};      
-		void SetPMT (RED::PMT* PMTX);
-		void SetOutWave (const OutWavePar &OWX); // Set OutWave parameters
-		void SetTimeSeq (vector <double> *Tseq); // Set vector of photon arrival times
+
+		// SETTERS
+		void SetPMT (RED::PMT* PMT); // Set PMT object
+		void SetOutWave (Double_t Period, Double_t Gain, Int_t NumSamples, Double_t Delay); // Set OutWave parameters
+		void SetPhotonTimes (vector <double> *PhotonTimes); // Set vector of photon arrival times
+
+		// ACTIONS
 		void CreateOutWave ();   // Create OutWave
+
+		// OUTPUT
 		void PrintOutWave ();    // Print all values of output signal
-		void Draw ();            // Draw OutWave
-		vector <double> OutWave; // Output waveform
+		void DrawOutWave ();     // Draw OutWave
+
+		// GETTERS
+		vector <double> GetOutWave() {return fOutWave;} // Output waveform vector
+
 	private:
-		RED::PMT *fPMT;
-		OutWavePar fOWX;
-		vector <double> *ftimeseq;
-		RED::PMT::PulseArray *PhotonPulse;
-		RED::PMT::PulseArray *DarkPulse;
-		void AddPulseArray (RED::PMT::PulseArray *Pulses);
+	
+		// OutWave Parameters
+		vector <double> fOutWave;
+		Double_t fPeriod;  // Time between samples of OutWave
+		Double_t fGain;    // ADC resolution
+		Int_t fNumSamples; // Number of samples in OutWave
+		Double_t fDelay;   // Delay from "0" of abs.time (related to photons times) to "0" sample of OutWave
+		
+		// PMT
+		RED::PMT *fPMT; // PMT object
+		RED::PMT::PulseArray *PhotonPulse; // array of SPE caused by photons
+		RED::PMT::PulseArray *DarkPulse;   // array of SPE caused by dark counts
+		
+		vector <double> *fPhotonTimes; // Photons arrival times
+		void AddPulseArray (RED::PMT::PulseArray *Pulses); // Adding pulses to output waveform
 };
 
 #endif // MakeWave_H

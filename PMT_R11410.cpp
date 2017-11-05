@@ -60,8 +60,10 @@ namespace RED
 	void PMT_R11410::CalculateParams() {
 		// Get probabilities of interaction
 
-		// Number of phe (given to PC, as if these phe were born in PC) per 1 photon passed through PC:
+		// Number of phe (by area given to PC, as if these phe were born in PC)
+		// per 1 photon passed through PC:
 		// fQE = fProb_C * (1 + fDPE_PC) + (1 - fProb_C) * fQE_1d_ratio
+		// In other words, it's a 1dyn contribution to full QE
 		double_t fQE_1d_ratio = 1./fGain_PC_1d * fGF_1d * fQE_1d;
 
 		fProb_C   = (fQE - fQE_1d_ratio) / (1 + fDPE_PC - fQE_1d_ratio); //  Prob. of int. in PC
@@ -71,13 +73,14 @@ namespace RED
 		fProb_1d1 = (1 - fDPE_1d) * fProb_1d; // Full prob. of 1phe in 1d
 		fProb_1d2 = fDPE_1d       * fProb_1d; // Full prob. of 2phe in 1d
 
-		// Get Area of SPE from 1d (assume that the width is the same as one from PC
-		// and the area is proportional to the amplitude)
+		// Get area of SPE from 1d (assume that the width is the same as one from PC
+		// so the area is proportional to the amplitude)
 		fArea_1d_mean   = fArea_mean  / fGain_PC_1d;
 		fArea_1d_sigma  = fArea_sigma / fGain_PC_1d;
 
 		// Get shape area and amplitude from SPE area
-		switch (fMode) {			case kModeF1 :
+		switch (fMode) {
+			case kModeF1 :
 				fShapeArea = fShape.func->Integral(GetXmin (), GetXmax ());
 				fAmpl_mean = fArea_mean / fShapeArea;
 				break;
@@ -99,7 +102,8 @@ namespace RED
 	}
 
 	Double_t PMT_R11410::Eval (Double_t t) const {
-		switch (fMode) {			case kModeF1 :   
+		switch (fMode) {
+			case kModeF1 :   
 				return (fShape.func->Eval(t));
 				break;
 			case kModeSpline :
@@ -131,25 +135,25 @@ namespace RED
 	}
 
 	// Convert photon to pulses. time - time of arr. photon
-	void PMT_R11410::OnePhoton (Double_t* time, PulseArray& electrons, bool fDebug) {
-		Pulse OnePulse;        // Temporary variable for saving each SPE
-		Double_t RND    = 0;   // Random in range 0..1 defining interact. type
-		Double_t TOFe   = 0;   // Temporary variable for time delay histogram
-		Int_t NumPhe    = 0;   // Number of photoelectrons caused by photon (negative values mean phe from 1dyn)
-		Double_t AmplMean  = 0; // mean SPE amplitude (different for PC and 1dyn)
-		Double_t AmplSigma = 0; // sigma of SPE amplitude (different for PC and 1dyn)
-		Double_t TOFeMean  = 0; // mean Time of Flight (different for PC and 1dyn)
-		Double_t TOFeSigma = 0; // sigma of Time of Flight (different for PC and 1dyn)
+	Char_t PMT_R11410::OnePhoton (Double_t* time, PulseArray& electrons, bool fDebug) {
+		Pulse OnePulse;         // Temporary variable for saving each SPE
+		Double_t RND       = 0; // Random in range 0..1 defining interact. type
+		Double_t TOFe      = 0; // Temporary variable for time delay histogram
+		Char_t NumPhe      = 0; // Number of photoelectrons caused by photon (negative values mean phe from 1dyn)
+		Double_t AmplMean  = 0; // Mean SPE amplitude (different for PC and 1dyn)
+		Double_t AmplSigma = 0; // Sigma of SPE amplitude (different for PC and 1dyn)
+		Double_t TOFeMean  = 0; // Mean Time of Flight (different for PC and 1dyn)
+		Double_t TOFeSigma = 0; // Sigma of Time of Flight (different for PC and 1dyn)
 		Double_t PulseArea = 0;
 
 		// Histograms for delay time and amplitude of pulses
 		if (!TimeHist) {
-			Double_t LowTime  = GetTOFe() - 3 * GetTOFe_Sigma(); // Lower bound of time delay for histogram;
+			Double_t LowTime  = 0;//; // Lower bound of time delay for histogram;
 			Double_t HighTime = GetTOFe() + 3 * GetTOFe_Sigma(); // Upper bound of time delay for histogram;
 			TimeHist = new TH1F ("TimeHist", "Time delay from photon hit to pulse", 100, LowTime, HighTime);
 		}
 		if (!AmplHist) {
-			Double_t LowAmpl  = GetAmpl() - 3 * GetAmpl_Sigma(); // Lower bound of amplitude for histogram;
+			Double_t LowAmpl  = 0;//GetAmpl() - 3 * GetAmpl_Sigma(); // Lower bound of amplitude for histogram;
 			Double_t HighAmpl = GetAmpl() + 3 * GetAmpl_Sigma(); // Upper bound of amplitude for histogram;
 			AmplHist = new TH1F ("AmplHist", "Amplitude of pulse", 100, LowAmpl, HighAmpl);
 		}
@@ -214,6 +218,7 @@ namespace RED
 			PulseArea += OnePulse.fAmpl * fShapeArea/(mV*ns);
 			PulseAreaHist->Fill(PulseArea);
 		}
+		return NumPhe;
 	}
 
 	void PMT_R11410::GenDCR (Double_t begintime, Double_t endtime, PulseArray& darkelectrons) {
@@ -238,14 +243,14 @@ namespace RED
 			DarkTimeHist->Fill (DarkPulse.fTime);
 			DarkAmplHist->Fill (DarkPulse.fAmpl);
 		}
-		//cout << "It was generated " << DarkNum << " dark counts between " << begintime/ns << " ns and " << endtime/ns << "ns" << endl;
+		//cout << "It were generated " << DarkNum << " dark counts between " << begintime/ns << " ns and " << endtime/ns << "ns" << endl;
 	}
 
 	void PMT_R11410::Clear(Option_t *option) { 
 		cout << "Function 'Clear' is not yet implemented" << endl;
 	}
 	
-	void PMT_R11410::DrawShape (const char* title) {
+	void PMT_R11410::DrawShape (const char* title) const {
 		TCanvas *c5 = new TCanvas();
 		c5->SetTitle("SPE Shape");
 		c5->cd();
@@ -264,18 +269,24 @@ namespace RED
 		//c5->WaitPrimitive();
 	}
 
-	void PMT_R11410::Print(Option_t *option) const {
+	void PMT_R11410::Print (Option_t *option) const {
 		cout << endl << "Printing PMT parameters..." << endl;
-		cout << "Defined parameters:" << endl;
+		cout << "User-defined parameters:" << endl;
+		PrintUsrDefParams();
+		cout << "Calculated parameters:"   << endl;
+		PrintCalcParams();
+	}
+	
+	void PMT_R11410::PrintUsrDefParams (Option_t *option) const {
 		cout << "  SPE shape type   =  ";
 		switch (fMode) {
-			case 0 :
+			case kModeNone :
 				cout << "None" << endl;
 				break;
-			case 1 :
-				cout << "TF1" << endl;
+			case kModeF1 :
+				cout << "TF1 function: " << fShape.func->GetExpFormula() << endl;
 				break;
-			case 2 :
+			case kModeSpline :
 				cout << "TSpline" << endl;
 				break;
 		}
@@ -311,22 +322,10 @@ namespace RED
 		cout << " \t//Afterpulses ?"        << endl;
 		cout <<    "  AP peak          =  " << fAP_peak;
 		cout << " \t//Afterpulses ?"        << endl;
-		
-		cout << "Calculated parameters:"        << endl;
-		cout << std::setiosflags(std::ios::fixed) << std::setprecision(2);
-		cout <<    "  Total PC probability =  " << fProb_C*100 << " %";
-		cout << " \t//Total interaction probability on Photocathode" << endl;
-		cout <<    "  1phe PC probability  =  " << fProb_C1*100 << " %";
-		cout << " \t//1phe interaction probability on Photocathode" << endl;
-		cout <<    "  2phe PC probability  =  " << fProb_C2*100 << " %";
-		cout << " \t//2phe interaction probability on Photocathode" << endl;
-		cout <<    "  Total 1d probability =  " << fProb_1d*100 << " %";
-		cout << " \t//Total interaction probability on 1st dynode" << endl;
-		cout <<    "  1phe 1d probability  =  " << fProb_1d1*100 << " %";
-		cout << " \t//Total interaction probability on 1st dynode" << endl;
-		cout <<    "  2phe 1d probability  =  " << fProb_1d2*100 << " %";
-		cout << " \t//Total interaction probability on 1st dynode" << endl;
-		cout << std::resetiosflags(std::ios::fixed) << std::setprecision(6);
+	}
+	
+	void PMT_R11410::PrintCalcParams (Option_t *option) const {
+		PrintProbs();
 		cout <<    "  SPE Shape Area       =  " << fShapeArea/(mV*ns) << " mV*ns";
 		cout << " \t//SPE Pulse Shape Area" << endl;
 		cout <<    "  SPE 1d Area mean     =  " << fArea_1d_mean/(mV*ns) << " mV*ns";
@@ -337,18 +336,18 @@ namespace RED
 		cout << " \t//Time of Flight from 1st dynode to anode, mean" << endl;
 		cout <<    "  TOF 1d->An sigma     =  " << fTOFe_1d_sigma/ns << " ns";
 		cout << " \t//Time of Flight from 1st dynode to anode, sigma" << endl;
-		if (fMode == 1) {
-			cout <<    "  SPE Shape Area       =  " << fShape.func->Integral(GetXmin (), GetXmax ())/(ns) << " arb.un.*ns";
+		if (fMode == kModeF1) {
+			cout << "Only TF1 parameters:" << endl;
+			cout <<    "  SPE Shape Area       =  " << fShape.func->Integral(GetXmin (), GetXmax ())/(mV*ns) << " mV*ns";
 			cout << " \t//SPE shape Area, integrated from Xmin to Xmax by ROOT standard method" << endl;
-			cout <<    "  SPE Shape MinValue   =  " << GetYmin() << " arb.un.";
+			cout <<    "  SPE Shape MinValue   =  " << GetYmin()/mV << " mV";
 			cout << " \t//Minimum value of SPE shape in range Xmin .. Xmax" << endl;
-			cout <<    "  SPE Shape MaxValue   =  " << GetYmax() << " arb.un.";
+			cout <<    "  SPE Shape MaxValue   =  " << GetYmax()/mV << " mV";
 			cout << " \t//Maximum value of SPE shape in range Xmin .. Xmax" << endl;
 		}
 	}
 
-	void PMT_R11410::PrintProbs(Option_t *option) const {
-		cout << endl << "Printing PMT parameters..." << endl;
+	void PMT_R11410::PrintProbs (Option_t *option) const {
 		cout << std::setiosflags(std::ios::fixed) << std::setprecision(2);
 		cout <<    "  Total PC probability =  " << fProb_C*100 << " %";
 		cout << " \t//Total interaction probability on Photocathode" << endl;

@@ -21,20 +21,23 @@ MakeWave::MakeWave () {
 }
 
 // Set PMT
-void MakeWave::SetPMT (RED::PMT* PMTX) {
-	fPMT = PMTX;
+void MakeWave::SetPMT (RED::PMT* PMT) {
+	fPMT = PMT;
 	//cout << "PMT was set" << endl;
 }
 
 // Set OutWave parameters
-void MakeWave::SetOutWave (const OutWavePar& OWX) {
-	fOWX = OWX;
+void MakeWave::SetOutWave (Double_t Period, Double_t Gain, Int_t NumSamples, Double_t Delay) {
+	fPeriod     = Period;
+	fGain       = Gain;
+	fNumSamples = NumSamples;
+	fDelay      = Delay;
 	//cout << "OutWave parameters were set" << endl;
 }
 
 // Set sequence of photon times
-void MakeWave::SetTimeSeq (vector <double>* Tseq) {
-	ftimeseq = Tseq;
+void MakeWave::SetPhotonTimes (vector <double>* PhotonTimes) {
+	fPhotonTimes = PhotonTimes;
 	//cout << "Sequence of SPE's arrival times was set" << endl;
 }
 
@@ -42,8 +45,9 @@ void MakeWave::SetTimeSeq (vector <double>* Tseq) {
 void MakeWave::CreateOutWave () {
 	//cout << "Creating OutWave..." << endl;
 
-	OutWave.clear();              //  Clear vector OutWave
-	OutWave.resize (fOWX.Num, 0); // Resize vector OutWave
+	fOutWave.clear();              //  Clear vector OutWave
+	fOutWave.resize (fNumSamples, 0); // Resize vector OutWave
+	Char_t NumPhe = 0;
 	
 	// Create PulseArray vector
 	if (!PhotonPulse) {
@@ -60,15 +64,15 @@ void MakeWave::CreateOutWave () {
 	/// ADD SPE FROM PHOTONS
 	//cout << "adding photons" << endl;
 	// Generate vector Pulse of PulseArray type
-	for (unsigned int i = 0; i < ftimeseq->size(); i++) {
-		fPMT->OnePhoton (&((*ftimeseq)[i]), *PhotonPulse, false);
+	for (unsigned int i = 0; i < fPhotonTimes->size(); i++) {
+		NumPhe = fPMT->OnePhoton (&(fPhotonTimes->at(i)), *PhotonPulse, true);
 	}
 	AddPulseArray (PhotonPulse);
 
 	/// ADD DARK COUNTS
 	//cout << "adding dark" << endl;
 	// Generate vector DarkPulse of PulseArray type
-	fPMT->GenDCR (fOWX.Delay, fOWX.Delay + fOWX.Num * fOWX.Period, *DarkPulse);
+	fPMT->GenDCR (fDelay - (fPMT->GetXmax() - fPMT->GetXmin()), fDelay + fNumSamples * fPeriod, *DarkPulse);
 	AddPulseArray (DarkPulse);
 	//cout << "OutWave was created" << endl;
 }
@@ -84,21 +88,21 @@ void MakeWave::AddPulseArray (RED::PMT::PulseArray *Pulses) {
 	// Go along all pulses in PulseArray vector DarkPulse and add them to OutWave
 	for (unsigned int i = 0; i < Pulses->size(); i++) {
 		// Calculate left and right samples including SPE
-		StartSample     =  ceil( (((*Pulses)[i]).fTime - fOWX.Delay + fPMT->GetXmin()) / fOWX.Period );
-		FinishSample    = floor( (((*Pulses)[i]).fTime - fOWX.Delay + fPMT->GetXmax()) / fOWX.Period );
+		StartSample     =  ceil( (((*Pulses)[i]).fTime - fDelay + fPMT->GetXmin()) / fPeriod );
+		FinishSample    = floor( (((*Pulses)[i]).fTime - fDelay + fPMT->GetXmax()) / fPeriod );
 		// Get delay time from "0" of OutWave to "0" of SPE shape
-		PulseTime       = ((*Pulses)[i]).fTime - fOWX.Delay;
+		PulseTime       = ((*Pulses)[i]).fTime - fDelay;
 		// Get amplitude of SPE shape
 		PulseAmpl       = ((*Pulses)[i]).fAmpl;
 		// Limit edges
 		if (StartSample < 0)
 			StartSample = 0;
-		if (FinishSample > fOWX.Num - 1)
-			FinishSample = fOWX.Num - 1;
+		if (FinishSample > fNumSamples - 1)
+			FinishSample = fNumSamples - 1;
 		// Add SPE to OutWave
 		for (int s = StartSample; s <= FinishSample; s++) {
-			SampleTime = s*fOWX.Period;
-			OutWave[s] += PulseAmpl/fOWX.Gain * fPMT->Eval(SampleTime - PulseTime);
+			SampleTime = s*fPeriod;
+			fOutWave[s] += PulseAmpl/fGain * fPMT->Eval(SampleTime - PulseTime);
 		}
 	}
 }
@@ -106,18 +110,18 @@ void MakeWave::AddPulseArray (RED::PMT::PulseArray *Pulses) {
 // Print OutWave
 void MakeWave::PrintOutWave() {
 	cout << "Printing OutWave..." << endl;
-	for (int i = 0; i < fOWX.Num; i++) {
-		cout << OutWave[i] << "\t(t = " << (fOWX.Delay + i*fOWX.Period)/ns << " ns)" << endl;
+	for (int i = 0; i < fNumSamples; i++) {
+		cout << fOutWave[i] << "\t(t = " << (fDelay + i*fPeriod)/ns << " ns)" << endl;
 	}
 	cout << "OutWave was printed" << endl;
 }
 
 // Draw OutWave
-void MakeWave::Draw () {
+void MakeWave::DrawOutWave () {
 	cout << "Drawing OutWave..." << endl;
-	TGraph *g1 = new TGraph(fOWX.Num);
-	for (int i = 0; i < fOWX.Num; i++) {
-		g1->SetPoint(i, (fOWX.Delay + i*fOWX.Period)/ns, OutWave[i]);
+	TGraph *g1 = new TGraph(fNumSamples);
+	for (int i = 0; i < fNumSamples; i++) {
+		g1->SetPoint(i, (fDelay + i*fPeriod)/ns, fOutWave[i]);
 	}
 	g1->SetTitle("Waveform");
 	g1->Draw();

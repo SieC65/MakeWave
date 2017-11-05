@@ -13,10 +13,12 @@ void MakeWave::SetSPE (TF1 *SPE) {
 	cout << "SPE signal was set" << endl;
 }
 
-void MakeWave::SetParams (Int_t Num, Double_t Delay, Double_t Period) {
-	fPeriod	= Period;
-	fNum	= Num;
-	fDelay	= Delay;
+void MakeWave::SetParams (Int_t Num, Double_t Delay, Double_t Period, Double_t Gain, Double_t SPEUnit) {
+	fPeriod		= Period;
+	fNum		= Num;
+	fDelay		= Delay;
+	fGain		= Gain;
+	fSPEUnit 	= SPEUnit;
 	cout << "Parameters were set" << endl;
 }
 
@@ -25,14 +27,13 @@ void MakeWave::SetTimeSeq (vector <double> *Tseq) {
 	cout << "Sequence of SPE's arrival times was set" << endl;
 }
 
-void MakeWave::CreateOutWave(Double_t ADCUnit) {
-	fADCUnit = ADCUnit;
+void MakeWave::CreateOutWave() {
 	Double_t t = 0;
 	OutWave.resize (fNum);
 	for (int sample = 0; sample < fNum; sample++) {
 		t = fDelay + sample*fPeriod;
 		for (int i = 0; i < int(ftimeseq->size()); i++) {
-			OutWave[sample] += (fSPE->Eval((t - ((*ftimeseq)[i]))/ns))*volt/fADCUnit;
+			OutWave[sample] += (fSPE->Eval((t - ((*ftimeseq)[i]))/ns))*fSPEUnit/fGain;
 			//cout << "for " << sample << " sample added " << fSPE->Eval(t - ((*ftimeseq)[i])) << endl;
 		}
 	}

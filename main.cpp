@@ -7,9 +7,11 @@ int main() {
 	//Set parameters values
 	TApplication *app = new TApplication("Canvas",0,0);
 	TF1 *SPE = new TF1("SPE","((x > 0) && (x < 1))*0.01");	//Function SPE, set in ns and mV
-	Int_t Num = 10;								//Number of samples in OutWave
-	Double_t Delay = 0 *ns;							//Delay from "0" of abs.time to "0" sample of OutWave
-	Double_t Period = 2 *ns;						//Time between samples of OutWave
+	Int_t Num 			= 10;			//Number of samples in OutWave
+	Double_t Delay 		= 0 *ns;		//Delay from "0" of abs.time to "0" sample of OutWave
+	Double_t Period 	= 2 *ns;		//Time between samples of OutWave
+	Double_t Gain 		= volt/1000;	//Units of ADC
+	Double_t SPEUnit 	= volt;			//Units of SPE
 	//Let's create example of sequence of SPE's arrival times
 		Double_t TseqArr[] = { -5.1 , -3.0 , 1.6 , 1.8 , 1.9 , 4.3 , 7.1 , 7.5 };
 		Int_t TseqArrSize = sizeof(TseqArr) / sizeof(TseqArr[0]);
@@ -20,7 +22,7 @@ int main() {
 		}
 	MakeWave *a = new MakeWave;			//Create object of MakeWave class
 	a->SetSPE (SPE);					//Set SPE function
-	a->SetParams (Num, Delay, Period);	//Set parameters
+	a->SetParams (Num, Delay, Period, Gain, SPEUnit);	//Set parameters
 	a->SetTimeSeq (&Tseq);				//Set sequence of SPE's arrival times
 	a->CreateOutWave();					//Create OutWave vector
 	a->PrintOutWave();					//Print OutWave

@@ -50,23 +50,27 @@ int main() {
 	a->SetSPE (SPE, SPEAmpl, SPEAmplSigma, SPEDelay, SPEDelaySigma);	//Set SPE
 	a->SetParams (Num, Delay, Period, Gain);	//Set parameters for OutWave
 	a->SetTimeSeq (&Tseq);			//Set sequence of SPE arrival times
-/*		vector <double> MeanOutWave;
-		MeanOutWave.resize(Num);
-		for (int i = 1; i < 5; i++) {
-			a->CreateOutWave();				//Create OutWave vector
-			a->Draw();
-			for (int k = 0; k < Num; k++) {
-				MeanOutWave[k] += a->OutWave[k];
-			}
+	a->SetIsrnd(true);
+	cout << a->GetIsrnd() << endl;
+	// Create average SPE
+	vector <double> MeanOutWave;
+	MeanOutWave.resize(Num);
+	for (int i = 1; i < 500; i++) {
+		a->CreateOutWave();				//Create OutWave vector
+	//	a->Draw();
+		for (int k = 0; k < Num; k++) {
+			MeanOutWave[k] += a->OutWave[k];
 		}
-		TCanvas *c2 = new TCanvas();
-		TGraph *g2 = new TGraph(Num);
-		for (int i = 0; i < Num; i++) {
-			g2->SetPoint(i, (Delay + i*Period)/ns, MeanOutWave[i]);
-		}
-		g2->Draw();
-		c2->WaitPrimitive();
-*/	a->CreateOutWave();	//Create OutWave vector
+	}
+	TCanvas *c2 = new TCanvas();
+	TGraph *g2 = new TGraph(Num);
+	for (int i = 0; i < Num; i++) {
+		g2->SetPoint(i, (Delay + i*Period)/ns, MeanOutWave[i]);
+	}
+	g2->Draw();
+	c2->WaitPrimitive();
+		
+	a->CreateOutWave();	//Create OutWave vector
 	a->Draw();
 	return 0;
 }

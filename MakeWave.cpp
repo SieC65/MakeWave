@@ -3,9 +3,10 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include <TCanvas.h>
+#include <time.h>
 
 
-MakeWave::MakeWave () {
+MakeWave::MakeWave ():fisrnd(true) {
 	cout << "MakeWave object was created" << endl;
 }
 
@@ -41,6 +42,9 @@ void MakeWave::CreateOutWave() {
 	for (int i = 0; i < int(ftimeseq->size()); i++) {
 		cout << "before random" << endl;
 		cout << "for " << i << " SPE AMPL=" << SPEAmplVec[i] << "and DEL=" << SPEDelayVec[i] << endl;
+		if (fisrnd == true) {
+			fRND.SetSeed(0);
+		}
 		SPEAmplVec[i] 	= fRND.Gaus(1, fSPEAmplSigma/fSPEAmpl);
 		SPEDelayVec[i] 	= fRND.Gaus(fSPEDelay, fSPEDelaySigma);
 		cout << "after random" << endl;

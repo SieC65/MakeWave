@@ -20,6 +20,8 @@ class MakeWave
 		void PrintOutWave ();	//Print all values of output signal
 		void Draw ();			//Draw OutWave values from abs time
 		vector <double> OutWave;	//Output signal
+		void SetIsrnd(Bool_t isrnd = true) {fisrnd = isrnd;}
+		Bool_t GetIsrnd () {return fisrnd;}
 	private:
 		vector <double> *ftimeseq;
 		Double_t fPeriod;
@@ -32,6 +34,7 @@ class MakeWave
 		Double_t fSPEAmplSigma;
 		Double_t fSPEDelay;
 		Double_t fSPEDelaySigma;
+		Bool_t fisrnd;
 };
 
 #endif // MakeWave_H

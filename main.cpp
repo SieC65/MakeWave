@@ -13,7 +13,7 @@ Double_t HalfDom (Double_t k, Double_t Width) {
 int main() {
 	TApplication *app = new TApplication("Canvas",0,0);
 	//Set parameters values
-	Double_t trig	 		= 0.01;		//trigger for SPE = trig*SPEAmplitude
+	Double_t trig	 		= 0.2;		//trigger for SPE = trig*SPEAmplitude
 	Double_t SPEamplitude 	= (-0.001)*volt;	//Amplitude of SPE gaussian
 	Double_t SPEwidth 		= 10*ns;	//FWHM of SPE gaussian
 	Int_t Num 				= 100;		//Number of samples in OutWave
@@ -28,13 +28,15 @@ int main() {
 			TseqArr[i] *=ns;	//set times in ns
 			Tseq[i] = TseqArr[i];
 		}
-//	TF1 *SPE = new TF1("SPE","((x > 0) && (x < 10))*(-0.001)");
-	TF1 *SPE = new TF1("SPE","gaus(0)",0,(2*HalfDom(trig, SPEwidth)/ns));	//Function SPE, limits are set in ns
+	TF1 *SPE = new TF1("SPE","((x > [0]) && (x < [1]))*[2]");	//Square pulse
+	SPE->SetParameter(0, 0);				//Left end of the range
+	SPE->SetParameter(1, SPEwidth);			//Right end of the range
+	SPE->SetParameter(2, SPEamplitude);	//Amplitude of square pulse
+/*	TF1 *SPE = new TF1("SPE","gaus(0)",0,(2*HalfDom(trig, SPEwidth)));	//Gaussian
 	SPE->SetParameter(0, SPEamplitude);		//Amplitude of gauss
-	SPE->SetParameter(1, (HalfDom(trig, SPEwidth))/ns);	//Center
-	SPE->SetParameter(2, (SPEwidth/ns)/(2*sqrt(2*log(2))));	//Sigma
-	SPE->Draw();
-	cout << "SPE value at 0 = " << (SPE->Eval(0))/(0.001*volt) << "mV" << endl;
+	SPE->SetParameter(1, (HalfDom(trig, SPEwidth)));	//Center
+	SPE->SetParameter(2, (SPEwidth)/(2*sqrt(2*log(2))));	//Sigma
+*/	SPE->Draw();
 	MakeWave *a = new MakeWave;			//Create object of MakeWave class
 	a->SetSPE (SPE);					//Set SPE function
 	a->SetParams (Num, Delay, Period, Gain);	//Set parameters

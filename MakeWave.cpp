@@ -32,7 +32,7 @@ void MakeWave::CreateOutWave() {
 	for (int sample = 0; sample < fNum; sample++) {
 		t = fDelay + sample*fPeriod;
 		for (int i = 0; i < int(ftimeseq->size()); i++) {
-			OutWave[sample] += (fSPE->Eval((t - ((*ftimeseq)[i]))/ns))/fGain;
+			OutWave[sample] += (fSPE->Eval((t - ((*ftimeseq)[i]))))/fGain;
 			//cout << "for " << sample << " sample added " << fSPE->Eval(t - ((*ftimeseq)[i])) << endl;
 		}
 	}

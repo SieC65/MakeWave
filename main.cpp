@@ -16,19 +16,25 @@ int main() {
 	
 	//Set SPE and OutWave parameters
 	MakeWave::SPEPar SPEEx;		//SPE Example
-		SPEEx.Type 			= 0;				//0 - gaussian , 1 - square pulse
-		SPEEx.Trig	 		= 0.01;				//Coeff: Trigger for SPE = Trig*SPEAmpl
-		SPEEx.Width 		= 10*ns;			//FWHM of SPE gaussian (or width of square pulse)
-		SPEEx.Ampl 			= (-0.001)*volt;	//Amplitude of SPE gaussian
-		SPEEx.AmplSigma		= 0.2*0.001*volt;	//Sigma for SPE amplitude
-		SPEEx.Delay			= 20*ns;			//Delay of SPE signal
-		SPEEx.DelaySigma	= 5*ns;				//Sigma for SPE delay
-		SPEEx.Domain		= SPEEx.Width;		//Domain width of SPE
+		SPEEx.Type 			= 0;			//0 - gaussian , 1 - square pulse
+		SPEEx.Trig	 		= 0.01;			//Coeff: Trigger for SPE = Trig*SPEAmpl
+		SPEEx.Width 		= 10*ns;		//FWHM of SPE gaussian (or width of square pulse)
+		SPEEx.Ampl 			= -1*mV;		//Amplitude of SPE gaussian
+		SPEEx.AmplSigma		= 0.002*mV;		//Sigma for SPE amplitude
+		SPEEx.Delay			= 20*ns;		//Delay of SPE signal
+		SPEEx.DelaySigma	= 0.05*ns;		//Sigma for SPE delay
+		SPEEx.Domain		= SPEEx.Width;	//Domain width of SPE
+		SPEEx.QE			= 0.3;			//Quantum Efficiency total
+		SPEEx.DPE			= 0.225;		//Double Photoelectron Emission = n(2phe)/(n(2phe)+n(1phe))
+		SPEEx.QE1phe		= SPEEx.QE*(1-SPEEx.DPE)/(1+SPEEx.DPE);	//Quantum Efficiency for 1 phe
+		SPEEx.QE2phe		= SPEEx.QE*(2*SPEEx.DPE)/(1+SPEEx.DPE);	//Quantum Efficiency for 2 phe
+		//Efficiency for 1din: S(1din) = S (PC) / 7 ; QE(1din) =  10.5%
+		SPEEx.Eff1din		= (1-(SPEEx.QE1phe+SPEEx.QE2phe)/7)*0.105;
 	MakeWave::OutWavePar OWEx;	//OutWave example
-		OWEx.Num 		= 500;					//Number of samples in OutWave
-		OWEx.Delay 		= 0*ns;					//Delay from "0" of abs.time to "0" sample of OutWave
-		OWEx.Period 	= 0.2*ns;					//Time between samples of OutWave
-		OWEx.Gain 		= 0.125*(volt/1000);	//Units of ADC
+		OWEx.Num 		= 500;		//Number of samples in OutWave
+		OWEx.Delay 		= 0*ns;		//Delay from "0" of abs.time to "0" sample of OutWave
+		OWEx.Period 	= 0.2*ns;	//Time between samples of OutWave
+		OWEx.Gain 		= 0.125*mV;	//Units of ADC
 	
 	//Set sequence of SPE arrival times
 	Double_t TseqArr[] = { -20 , 0 , 5.5 , 15 , 50};

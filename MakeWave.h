@@ -5,6 +5,7 @@
 #include <TF1.h>
 #include <TRandom.h>
 #include <TString.h>
+#define mV (volt/1000)
 
 using namespace std;
 

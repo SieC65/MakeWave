@@ -13,7 +13,7 @@ class MakeWave
 	public:
 		MakeWave ();
 		void SetSPE (TF1 *SPE);		//Set SPE function
-		void SetParams (Int_t Num, Double_t Delay, Double_t Period, Double_t Gain = volt/1000, Double_t SPEUnit = volt);	//Set parameters
+		void SetParams (Int_t Num, Double_t Delay, Double_t Period, Double_t Gain);	//Set parameters
 		void SetTimeSeq (vector <double> *Tseq);	//Set sequence of SPE's arrival times
 		void CreateOutWave ();	//Create OutWave with unit of ADC as parameter
 		void PrintOutWave ();	//print all values of output signal
@@ -24,7 +24,6 @@ class MakeWave
 		Double_t fPeriod;
 		Double_t fDelay;
 		Double_t fGain;
-		Double_t fSPEUnit;
 		Int_t fNum;
 		TF1 *fSPE;
 };

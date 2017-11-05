@@ -6,7 +6,12 @@
 int main() {
 	//Set parameters values
 	TApplication *app = new TApplication("Canvas",0,0);
-	TF1 *SPE = new TF1("SPE","((x > 0) && (x < 10))*(-0.001)");	//Function SPE, set in ns and mV
+	TF1 *SPE = new TF1("SPE","gaus(0)",0,10);	//Function SPE, set in ns and mV
+	SPE->SetParameter(0, -0.001);	//Amplitude of gauss
+	SPE->SetParameter(1, 5);		//Center of gauss
+	SPE->SetParameter(2, 2);		//Sigma
+//	TF1 *SPE = new TF1("SPE","((x > 0) && (x < 10))*(-0.001)");
+//	SPE->Draw();
 	Int_t Num 			= 10;			//Number of samples in OutWave
 	Double_t Delay 		= 0 *ns;		//Delay from "0" of abs.time to "0" sample of OutWave
 	Double_t Period 	= 2 *ns;		//Time between samples of OutWave

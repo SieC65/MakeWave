@@ -1,16 +1,11 @@
 #include <iostream>
 #include "MakeWave.h"
-#include <TF1.h>
 #include <TApplication.h>
-#include <TMath.h>
 #include <TCanvas.h>
 #include <TGraph.h>
+#include "SystemOfUnits.h"
 
-//Time between center of gaus and trigger moment. Domain = 2*HalfDom.
-Double_t HalfDom (Double_t k, Double_t Width) {
-	Double_t HaD = Width*sqrt(log2(1/k))/2;
-	return HaD;
-}
+using namespace CLHEP;
 
 //Print 2 graphs (new and old algorithms) for sum of DebugN OutWaves
 void Compare (int DebugN, struct MakeWave::OutWavePar OW, MakeWave *aex);
@@ -36,42 +31,23 @@ int main() {
 		OWEx.Gain 		= 0.125*(volt/1000);	//Units of ADC
 	
 	//Set sequence of SPE arrival times
-	Double_t TseqArr[] = { -5 , 0 , 30 , 60 };
+	Double_t TseqArr[] = { -20 , 0 , 5.5 , 15 , 50};
 	Int_t TseqArrSize = sizeof(TseqArr) / sizeof(TseqArr[0]);
 	vector <double> Tseq (TseqArrSize);
 	for (int i = 0; i < TseqArrSize; i++) {
 		TseqArr[i] *=ns;	//Set times in ns
 		Tseq[i] = TseqArr[i];
 	}
-	
-	//SPE form is set below
-	TF1 *SPE;
-	if (SPEEx.Type == 1) {
-		//Square pulse
-		SPEEx.Domain = SPEEx.Width;
-		SPE = new TF1("SPE","((x > [0]) && (x < [1]))*[2]");
-		SPE->SetParameter(0, 0);			//Left end of the range
-		SPE->SetParameter(1, SPEEx.Domain);		//Right end of the range
-		SPE->SetParameter(2, SPEEx.Ampl);		//Amplitude of square pulse
-	}
-	else {
-		//Gaussian
-		SPEEx.Domain = 2*HalfDom(SPEEx.Trig, SPEEx.Width);
-		SPE = new TF1("SPE","gaus(0)",0,(2*HalfDom(SPEEx.Trig, SPEEx.Width)));
-		SPE->SetParameter(0, SPEEx.Ampl);		//Amplitude of gauss
-		SPE->SetParameter(1, SPEEx.Domain/2);	//Center
-		SPE->SetParameter(2, (SPEEx.Width)/(2*sqrt(2*log(2))));	//Sigma
-	}
 
 	//Set parameters given above and create OutWave
 	MakeWave *a = new MakeWave;	//Create object of MakeWave class
-	a->SetSPE (SPE, SPEEx);		//Set SPE parameters
+	a->SetSPE (SPEEx);			//Set SPE
 	a->SetParams (OWEx);		//Set OutWave parameters
 	a->SetTimeSeq (&Tseq);		//Set sequence of SPE arrival times
 	a->SetRand(true);			//Randomize random generator for SPE params
 	if (DebugAlg == 0) {
 		a->CreateOutWave();		//Just create OutWave vector
-		a->Draw("one.jpg");		//Draw OutWave on screen and to file
+		a->Draw();				//And draw OutWave on screen (may to file)
 	}
 	else {
 		Compare (DebugAlg, OWEx, a);	//Debug algorithm

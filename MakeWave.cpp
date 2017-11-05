@@ -3,15 +3,34 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include <TCanvas.h>
-#include <time.h>
+#include "SystemOfUnits.h"
+
+using namespace CLHEP;
 
 MakeWave::MakeWave () : fisrnd(true) {
 	cout << "MakeWave object was created" << endl;
 }
 
-void MakeWave::SetSPE (TF1 *SPE, struct SPEPar SPEX) {
-	fSPE			= SPE;	//now addresses of fSPE and SPE are equal (pointer SPE created in main.cpp)	
-	fSPEX			= SPEX;
+void MakeWave::SetSPE (struct SPEPar SPEX) {
+	fSPEX = SPEX;
+	//SPE form is set below
+	if (fSPEX.Type == 1) {
+		//Square pulse
+		fSPEX.Domain = fSPEX.Width;				//Domain of SPE
+		fSPE = new TF1("SPE","((x > [0]) && (x < [1]))*[2]");
+		fSPE->SetParameter(0, 0);				//Left end of the range
+		fSPE->SetParameter(1, fSPEX.Domain);	//Right end of the range
+		fSPE->SetParameter(2, fSPEX.Ampl);		//Amplitude of square pulse
+	}
+	else {
+		//Gaussian
+		//Domain of SPE (region with value > fSPEX.Trig*fSPEX.Ampl)
+		fSPEX.Domain = 2*fSPEX.Width*sqrt(log2(1/fSPEX.Trig))/2;	
+		fSPE = new TF1("SPE","gaus(0)",0,fSPEX.Domain);
+		fSPE->SetParameter(0, fSPEX.Ampl);		//Amplitude of gauss
+		fSPE->SetParameter(1, fSPEX.Domain/2);	//Center
+		fSPE->SetParameter(2, (fSPEX.Width)/(2*sqrt(2*log(2))));	//Sigma
+	}
 	cout << "SPE signal was set" << endl;
 }
 
@@ -23,6 +42,14 @@ void MakeWave::SetParams (struct OutWavePar OWX) {
 void MakeWave::SetTimeSeq (vector <double> *Tseq) {
 	ftimeseq = Tseq;	//now addresses of ftimeseq and Tseq are equal (pointer Tseq created in main.cpp)
 	cout << "Sequence of SPE's arrival times was set" << endl;
+}
+
+void MakeWave::SetRand(Bool_t isrnd) {
+	fisrnd = isrnd;
+}
+
+Bool_t MakeWave::GetIsrnd () {
+	return fisrnd;
 }
 
 void MakeWave::CreateOutWave() {
@@ -100,7 +127,7 @@ void MakeWave::Draw (TString name) {
 		g1->SetPoint(i, (fOWX.Delay + i*fOWX.Period)/ns, OutWave[i]);
 	}
 	g1->Draw();
-//	if (name != "")
-//		c1->SaveAs(name);	//graph is closed if uncommented
+	if (name != "")
+		c1->SaveAs(name);	//graph is closed when enabled
 	c1->WaitPrimitive();
 }

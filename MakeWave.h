@@ -3,12 +3,10 @@
 #include <vector>
 #include <Rtypes.h>
 #include <TF1.h>
-#include "SystemOfUnits.h"
 #include <TRandom.h>
 #include <TString.h>
 
 using namespace std;
-using namespace CLHEP;
 
 class MakeWave
 {
@@ -32,16 +30,16 @@ class MakeWave
 			Double_t Period;	//Time between samples of OutWave
 			Double_t Gain;		//Units of ADC
 		};		
-		void SetSPE (TF1 *SPE, SPEPar SPEX);	//Set SPE parameters
-		void SetParams (OutWavePar OWX);		//Set OutWave parameters
+		void SetSPE (SPEPar SPEX);	//Set SPE parameters
+		void SetParams (OutWavePar OWX);	//Set OutWave parameters
 		void SetTimeSeq (vector <double> *Tseq);	//Set vector of SPE's arrival times
 		void CreateOutWave ();		//Create OutWave
 		void CreateOutWaveOld();	//Create OutWave (old algorithm)
 		void PrintOutWave ();		//Print all values of output signal
-		void Draw (TString filename = "");		//Draw OutWave (on screen or to file)
+		void Draw (TString filename = "");	//Draw OutWave (on screen or to file <filename>)
 		vector <double> OutWave;	//Output waveform
-		void SetRand(Bool_t isrnd = true) {fisrnd = isrnd;}	//Randomize rnd. gen. for SPE params
-		Bool_t GetIsrnd () {return fisrnd;}		//Return, was randomize set or wasn't
+		void SetRand(Bool_t isrnd = true);	//Randomize rnd. gen. for SPE params
+		Bool_t GetIsrnd ();					//Return, was randomize set or wasn't
 	private:
 		SPEPar fSPEX;
 		OutWavePar fOWX;

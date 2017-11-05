@@ -75,10 +75,10 @@ namespace RED
 		typedef std::vector<struct Pulse> PulseArray;
 
 		// MAIN FUNCTIONS
-		virtual int Begin (PulseArray &electrons) { return(0); }
-		virtual int OnePhoton (Double_t time, PulseArray &electrons,
-		                       bool fDebug = false) = 0; // Convert photon to pulses
-		virtual int End (PulseArray &electrons) { return(0); }
+		virtual int  Begin (PulseArray &electrons) { return(0); }
+		virtual char OnePhoton (Double_t time, PulseArray &electrons,
+		                        bool fDebug = false) = 0; // Convert photon to pulses
+		virtual int  End (PulseArray &electrons) { return(0); }
 		virtual void Clear (Option_t *option="") { ; }
 
 		// Define SPE shape type
@@ -120,7 +120,8 @@ namespace RED
 		void SetShape (TSpline *Shape);
 		// Set advanced parameters
 		void CalculateParams(); // Calculate auxiliary parameters
-		void SetDPE        (Double_t DPE        = 0.225  );
+		void SetDPE_PC     (Double_t DPE_PC     = 0.225  );
+		void SetDPE_1d     (Double_t DPE_1d     = 0      );
 		void SetQE_1d      (Double_t QE_1d      = 0.105  );
 		void SetGain_PC_1d (Double_t Gain_PC_1d = 13     );
 		void SetGF_1d      (Double_t GF_1d      = 0.1    );
@@ -144,7 +145,8 @@ namespace RED
 		Double_t Eval(Double_t t)     const;
 		// Get independent PMT parameters
 		Double_t GetQE()              const {return fQE;}
-		Double_t GetDPE()             const {return fDPE;}
+		Double_t GetDPE_PC()          const {return fDPE_PC;}
+		Double_t GetDPE_1d()          const {return fDPE_1d;}
 		Double_t GetTOFe()            const {return fTOFe_mean;}
 		Double_t GetTOFe_Sigma()      const {return fTOFe_sigma;}
 		Double_t GetQE_1d()           const {return fQE_1d;}
@@ -156,9 +158,9 @@ namespace RED
 		Double_t GetAP_peak()         const {return fAP_peak;}
 
 		// MAIN FUNCTIONS
-		int Begin (PulseArray &electrons);
-		int OnePhoton (Double_t time, PulseArray &electrons, bool fDebug=true);
-		int End   (PulseArray &electrons);
+		int  Begin (PulseArray &electrons);
+		char OnePhoton (Double_t time, PulseArray &electrons, bool fDebug=true);
+		int  End   (PulseArray &electrons);
 		void Clear (Option_t *option="");
 
 	private:
@@ -166,16 +168,17 @@ namespace RED
 		// Area and TOF comes from making several photoelectrons
 
 		// Independent PMT parameters
-		Double_t fQE;         // Quantum Efficiency(standard, i.e. with many phe), probability
-		Double_t fDPE;        // Double Photoelectron Emission P(2phe)/(P(2phe)+P(1phe))
+		Double_t fQE;         // Quantum Efficiency(standard, i.e. with many phe)
+		Double_t fDPE_PC;     // Double Photoelectron Emission probability for PC
+		Double_t fDPE_1d;     // Double Photoelectron Emission probability for 1dyn
 		Double_t fArea_mean;  // SPE pulse area
 		Double_t fArea_sigma; //
 		Double_t fTOFe_mean;  // Time of Flight from cathode to anode
 		Double_t fTOFe_sigma; //
-		Double_t fQE_1d;      // Quantum Efficiency for 1dyn(only 1phe), probability
+		Double_t fQE_1d;      // Quantum Efficiency for 1dyn
 		Double_t fGain_PC_1d; // Amplification on first gap(cathode-1dynode), ratio
-		Double_t fGF_1d;      // Average geom. prob. for a random photon from cathode to hit 1st dynode
-		Double_t fTOFe_PC_1d; // Time from cathode to 1st dynode
+		Double_t fGF_1d;      // Average geom. prob. for a random photon from cathode to hit 1dyn
+		Double_t fTOFe_PC_1d; // Time from cathode to 1dyn
 		Double_t fDCR;        // Dark count rate, Hz
 		Double_t fAP_cont;    //
 		Double_t fAP_peak;    // Afterpulsing probability, for continuum and peak
@@ -186,7 +189,9 @@ namespace RED
 		Double_t fProb_C;          // Prob. of int. in PC
 		Double_t fProb_C1;         // Prob. of 1phe in PC
 		Double_t fProb_C2;         // Prob. of 2phe in PC
-		Double_t fProb_1d;         // Full prob. of int. in 1d
+		Double_t fProb_1d;         // Full prob. of int. in 1dyn
+		Double_t fProb_1d1;        // Full prob. of 1phe in 1dyn
+		Double_t fProb_1d2;        // Full prob. of 2phe in 1dyn
 		Double_t fArea_1d_mean;    // SPE area from 1d
 		Double_t fArea_1d_sigma;   // = Area_sigma / Gain_PC_1d
 		Double_t fTOFe_1d_mean;    // Time of Flight e- from 1dyn to anode

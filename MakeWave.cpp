@@ -45,7 +45,7 @@ void MakeWave::CreateOutWave () {
 	Double_t PulseAmplMax = 0; // Maximum amplitude of SPE shape
 	Int_t StartSample     = 0; // First sample in SPE domain
 	Int_t FinishSample    = 0; // Last sample in SPE domain
-	Int_t InteractType    = 0; // Type of interaction :
+	char InteractType     = 0; // Type of interaction :
                              // "0" - no int, "1" - 1phe in PC, "2" - 2phe in PC, "-1" - 1phe in 1d
 
 	OutWave.clear();              //  Clear vector OutWave
@@ -53,14 +53,15 @@ void MakeWave::CreateOutWave () {
 
 	// Histogram NPhe for number of photons created 0, 1 and 2 phe
 	// (bins centers are the same as InteractType)
-	NPhe = new TH1F ("NPhe","NumberOfPhe",20,-1.5,2.5);
+	NPhe = new TH1F ("NPhe","NumberOfPhe",5,-2,3);
 
 	// Create PulseArray vector
 	RED::PMT::PulseArray *Pulse = new RED::PMT::PulseArray;
+	
 	// Go along all arrival times and fill the *Pulse
 	cout << "Obtaining pulses vector..." << endl;
 	for (unsigned int i = 0; i < ftimeseq->size(); i++) {
-		InteractType = fPMT->OnePhoton ((*ftimeseq)[i], *Pulse);
+		InteractType = fPMT->OnePhoton ((*ftimeseq)[i], *Pulse, false);
 		NPhe->Fill (InteractType);
 	}
 	
@@ -68,7 +69,7 @@ void MakeWave::CreateOutWave () {
 	for (unsigned int i = 0; i < Pulse->size(); i++) {
 		if (PulseAmplMax < ((*Pulse)[i]).fAmpl) {
 			PulseAmplMax = ((*Pulse)[i]).fAmpl;
-			cout << "Max found amplitude is " << PulseAmplMax/mV << " mV" << endl;
+			cout << "Max found amplitude is " << PulseAmplMax << " arb.un." << endl;
 		}
 	}
 
@@ -87,7 +88,8 @@ void MakeWave::CreateOutWave () {
 		// Get amplitude of SPE shape
 		PulseAmpl       = ((*Pulse)[i]).fAmpl;
 		// Fill pulse area histogram
-		PA->Fill( PulseAmpl/mV * fPMT->GetArea()/ns );
+		PA->Fill( PulseAmpl * fPMT->GetArea()/(mV*ns) );
+		PA->Fill( PulseAmpl * fPMT->GetArea()/(mV*ns) );
 		// Limit edges
 		if (StartSample < 0)
 			StartSample = 0;

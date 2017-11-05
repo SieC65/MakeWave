@@ -38,7 +38,7 @@ int main () {
 	Int_t DebugNum  = 1; // Number of OutWaves for averaging by AverageOW
 
 	ArrTimes AT;    // Params for random set photons arrival times
-		AT.number = 1000000;    // Number of photons (0: manual set)
+		AT.number = 10000000;    // Number of photons (0: manual set)
 		AT.lRange = -100*ns; // Begin range of time
 		AT.rRange =  100*ns; //   End range of time
 	Double_t TseqArr[] = { -20 , 0 , 5.5 , 15 , 50}; // Manual values in ns
@@ -62,11 +62,12 @@ int main () {
 	// Hamamatsu R11410-20 PMTs..." //JINST 2016
 	Double_t SPE_Width  = 10*ns;    // Width of SPE pulse shape (FWHM for gauss)
 	Double_t SPE_Xmin   = -50*ns;   // Begin time of domain
-	Double_t SPE_Xmax   = 50*ns;    // End time of domain
-	SPE_Type            = kModeSpline;  // Type of SPE form. 0 - None , 1 - TF1 , 2 - TSpline
+	Double_t SPE_Xmax   =  50*ns;   // End time of domain
+	SPE_Type            = kModeSpline; // Type of SPE shape: 0 - None , 1 - TF1 , 2 - TSpline
 	Double_t QE         = 0.3;      // Quantum Efficiency (full)
-	Double_t DPE        = 0.225;    // Double Photoelectron Emission P(2phe)/(P(2phe)+P(1phe))
-	Double_t QE_1d      = 0.105;    // QE for 1dyn (only 1phe), prob.
+	Double_t DPE_PC     = 0.225;    // Double Photoelectron Emission probability for PC
+	Double_t DPE_1d     = 0;        // Double Photoelectron Emission probability for 1dyn
+	Double_t QE_1d      = 0.105;    // Quantum Efficiency for 1dyn
 	Double_t Gain_PC_1d = 13;       // Amplification on first gap (PC-1dyn)
 	Double_t GF_1d      = 0.1;      // Average geom. prob. for a rndm photon from PC to hit 1st dyn
 	Double_t Area_mean  = 10*mV*ns; // SPE pulse area
@@ -82,14 +83,18 @@ int main () {
 			break;
 		case kModeF1 :
 			SPE_Shape.func = new TF1("SPE","gaus(0)",SPE_Xmin,SPE_Xmax);
-			SPE_Shape.func->SetParameter (0, 1);    // Amplitude
+			SPE_Shape.func->SetParameter (0, 1*mV); // Amplitude
 			SPE_Shape.func->SetParameter (1, 0*ns); // Center
 			SPE_Shape.func->SetParameter (2, (SPE_Width)/(2*sqrt(2*log(2)))); // Sigma
 			break;
 		case kModeSpline :
 			Int_t splpoints = 9;
-			Double_t splx[] = {-0.22, 0.05, 0.25, 0.35, 0.61,0.7,0.85,0.89,0.95};
-			Double_t sply[] = {1,2.9,5.6,7.4,9.6,8.7,6.3,4.5,2};
+			Double_t splx[] = {-0.22, 0.05, 0.25, 0.35, 0.61, 0.7, 0.85, 0.89, 0.95}; // ns
+			Double_t sply[] = {1    , 2.9 , 5.6 , 7.4 , 9.6 , 8.7, 6.3 , 4.5 , 2   }; // mV
+			for (int i=0;i<splpoints;i++) {
+				splx[i] = splx[i] * ns;
+				sply[i] = sply[i] * mV;
+			}
 			TGraph* splgraph = new TGraph(splpoints,splx,sply);
 			SPE_Shape.spline = new TSpline3("Spline shape",splgraph);
 			break;
@@ -112,7 +117,8 @@ int main () {
 	PMT_R11410 *R11 = new PMT_R11410;
 	R11->SetDefaults();
 	R11->SetParams     (QE, Area_mean, DCR, AP_cont);
-	R11->SetDPE        (DPE);
+	R11->SetDPE_PC     (DPE_PC);
+	R11->SetDPE_1d     (DPE_1d);
 	R11->SetQE_1d      (QE_1d);
 	R11->SetGain_PC_1d (Gain_PC_1d);
 	R11->SetGF_1d      (GF_1d);
@@ -141,24 +147,26 @@ int main () {
 	
 	R11->DrawShape("user-defined SPE shape;time, ns;Amplitude, arb.un.");
 	
-	cout << "It were " << DebugNum*Tseq.size() << " photons that created:" << endl;
-	cout << "nothing:\t"     << a->NPhe->GetBinContent(8)  << endl;
-	cout << "1 phe in PC:\t" << a->NPhe->GetBinContent(13) << endl;
-	cout << "2 phe in PC:\t" << a->NPhe->GetBinContent(18) << endl;
-	cout << "1 phe in 1d:\t" << a->NPhe->GetBinContent(3)  << endl;
+	Int_t TotalNum = DebugNum*Tseq.size();
+	cout << "It were " << TotalNum << " photons that created:" << endl;
+	cout << "nothing:\t"     << a->NPhe->GetBinContent(3)*100/TotalNum  << " %" << endl;
+	cout << "1 phe in PC:\t" << a->NPhe->GetBinContent(4)*100/TotalNum  << " %" << endl;
+	cout << "2 phe in PC:\t" << a->NPhe->GetBinContent(5)*100/TotalNum  << " %" << endl;
+	cout << "1 phe in 1d:\t" << a->NPhe->GetBinContent(2)*100/TotalNum  << " %" << endl;
+	cout << "2 phe in 1d:\t" << a->NPhe->GetBinContent(1)*100/TotalNum  << " %" << endl;
 
 	TCanvas *c2 = new TCanvas();
 	c2->SetTitle("Number of phe");
 	c2->cd();
 	a->NPhe->Draw();
-	a->NPhe->SetTitle("Number of phe resulted (-1 == 1phe from 1st dynode);N(phe);Events");
+	a->NPhe->SetTitle("Number of phe resulted (-1 or -2 == 1 or 2 phe from 1st dynode);N(phe);Events");
 	
 	TCanvas *c3 = new TCanvas();
 	c3->cd();
 	c3->SetLogy();
 	a->PA->Draw();
 	c3->WaitPrimitive();
-	
+	R11->Print();
 	test(a, R11);
 	return 0;
 }

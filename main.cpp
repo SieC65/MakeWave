@@ -12,11 +12,11 @@ void Compare (int DebugN, struct MakeWave::OutWavePar OW, MakeWave *aex);
 
 int main() {
 	TApplication *app = new TApplication("Canvas",0,0);
-	Int_t DebugAlg	= 0;	//0 - for only new algorithm, any other natural - for Compare ()
+	Int_t DebugAlg	= 1;	//0 - for only new algorithm, any other natural - for Compare ()
 	
 	//Set SPE and OutWave parameters
 	MakeWave::SPEPar SPEEx;		//SPE Example
-		SPEEx.Type 			= 1;				//0 - gaussian , 1 - square pulse
+		SPEEx.Type 			= 0;				//0 - gaussian , 1 - square pulse
 		SPEEx.Trig	 		= 0.01;				//Coeff: Trigger for SPE = Trig*SPEAmpl
 		SPEEx.Width 		= 10*ns;			//FWHM of SPE gaussian (or width of square pulse)
 		SPEEx.Ampl 			= (-0.001)*volt;	//Amplitude of SPE gaussian
@@ -25,9 +25,9 @@ int main() {
 		SPEEx.DelaySigma	= 5*ns;				//Sigma for SPE delay
 		SPEEx.Domain		= SPEEx.Width;		//Domain width of SPE
 	MakeWave::OutWavePar OWEx;	//OutWave example
-		OWEx.Num 		= 50;					//Number of samples in OutWave
+		OWEx.Num 		= 500;					//Number of samples in OutWave
 		OWEx.Delay 		= 0*ns;					//Delay from "0" of abs.time to "0" sample of OutWave
-		OWEx.Period 	= 2*ns;					//Time between samples of OutWave
+		OWEx.Period 	= 0.2*ns;					//Time between samples of OutWave
 		OWEx.Gain 		= 0.125*(volt/1000);	//Units of ADC
 	
 	//Set sequence of SPE arrival times

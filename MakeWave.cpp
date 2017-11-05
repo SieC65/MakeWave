@@ -25,12 +25,14 @@ void MakeWave::SetSPE (struct SPEPar SPEX) {
 	else {
 		//Gaussian
 		//Domain of SPE (region with value > fSPEX.Trig*fSPEX.Ampl)
-		fSPEX.Domain = 2*fSPEX.Width*sqrt(log2(1/fSPEX.Trig))/2;	
+		fSPEX.Domain = fSPEX.Width * (sqrt(log2(1/fSPEX.Trig)) + 1)/2;	
 		fSPE = new TF1("SPE","gaus(0)",0,fSPEX.Domain);
 		fSPE->SetParameter(0, fSPEX.Ampl);		//Amplitude of gauss
-		fSPE->SetParameter(1, fSPEX.Domain/2);	//Center
+		fSPE->SetParameter(1, fSPEX.Width/2);	//Center
 		fSPE->SetParameter(2, (fSPEX.Width)/(2*sqrt(2*log(2))));	//Sigma
-	}
+		fSPE->Draw();
+	}	
+	fSPE->SetNpx(1000);
 	cout << "SPE signal was set" << endl;
 }
 
@@ -46,6 +48,8 @@ void MakeWave::SetTimeSeq (vector <double> *Tseq) {
 
 void MakeWave::SetRand(Bool_t isrnd) {
 	fisrnd = isrnd;
+	if (fisrnd == true)
+		fRND.SetSeed(0);
 }
 
 Bool_t MakeWave::GetIsrnd () {
@@ -60,26 +64,37 @@ void MakeWave::CreateOutWave() {
 	Double_t SPEDelaySample	= 0;
 	Int_t startsample		= 0;
 	Int_t finishsample		= 0;
-	if (fisrnd == true)
-		fRND.SetSeed(0);
-//	cout << "SPE Domain=" << fSPEX.Domain << endl;
+	Bool_t PosAmplSigma		= true;
+	Bool_t PosDelaySigma	= true;
+	if (fSPEX.AmplSigma <= 0) {
+		PosAmplSigma	= false;
+		SPEAmplSample	= 1;
+	}
+	if (fSPEX.DelaySigma <= 0) {
+		PosDelaySigma	= false;
+		SPEDelaySample	= fSPEX.Delay;
+	}
+	cout << "SPE Domain=" << fSPEX.Domain << endl;
 	for (int i = 0; i < int(ftimeseq->size()); i++) {
-		SPEAmplSample	= fRND.Gaus(1, fSPEX.AmplSigma/fSPEX.Ampl);
-		SPEDelaySample	= fRND.Gaus(fSPEX.Delay, fSPEX.DelaySigma);
+		if (PosAmplSigma)
+			SPEAmplSample	= fRND.Gaus(1, fSPEX.AmplSigma/fSPEX.Ampl);
+		if (PosDelaySigma)
+			SPEDelaySample	= fRND.Gaus(fSPEX.Delay, fSPEX.DelaySigma);
 		startsample 	= int(((*ftimeseq)[i] + SPEDelaySample - fOWX.Delay)/fOWX.Period) + 1;	//first sample in SPE domain
-		finishsample 	= startsample + int(fSPEX.Domain/fOWX.Period);
+		finishsample 	= int(((*ftimeseq)[i] + SPEDelaySample - fOWX.Delay + fSPEX.Domain)/fOWX.Period);	//last sample in SPE domain
 		if (startsample < 0)
 			startsample = 0;
 		if (finishsample > fOWX.Num - 1)
 			finishsample = fOWX.Num - 1;
-	//	cout << "for " << i << " SPE AMPL=" << SPEAmplSample << ", DELAY=" << SPEDelaySample;
-	//	cout << ", ARRTIME=" << (*ftimeseq)[i] + SPEDelaySample - fOWX.Delay << endl;		
-	//	cout << "Write from " << startsample << " to " << finishsample << " samples" << endl;
+		cout << "for " << i << " SPE AMPL=" << SPEAmplSample << ", DELAY=" << SPEDelaySample;
+		cout << ", ARRTIME=" << (*ftimeseq)[i] + SPEDelaySample - fOWX.Delay << endl;		
+		cout << "Write from " << startsample << " to " << finishsample << " samples";
+		cout << " (Domain = " << fSPEX.Domain << ")" << endl;
 		for (int sample = startsample; sample <= finishsample; sample++) {
 			sampletime = fOWX.Delay + sample*fOWX.Period;
 			OutWave[sample] += SPEAmplSample*(fSPE->Eval(sampletime - SPEDelaySample - (*ftimeseq)[i]))/fOWX.Gain;
-		//	cout << "\tfor " << sample << " sample (" << sampletime/ns << " ns) added ";
-		//	cout << SPEAmplSample*(fSPE->Eval(sampletime - SPEDelaySample - (*ftimeseq)[i]))/fOWX.Gain << endl;
+			cout << "\tfor " << sample << " sample (" << sampletime/ns << " ns) added ";
+			cout << SPEAmplSample*(fSPE->Eval(sampletime - SPEDelaySample - (*ftimeseq)[i]))/fOWX.Gain << endl;
 		}
 	}
 //	cout << "OutWave was created" << endl;

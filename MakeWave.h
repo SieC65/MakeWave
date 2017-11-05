@@ -20,20 +20,20 @@ class MakeWave
 		MakeWave ();
 		// OutWave Parameters
 		struct OutWavePar {
-			Double_t Period;	// Time between samples of OutWave
-			Double_t Gain;		// Units of ADC
-			Int_t Num ;			// Number of samples in OutWave
-			Double_t Delay;		// Delay from "0" of abs.time to "0" sample of OutWave
-		};		
-		void SetPMT (PMT *PMT);
-		void SetOutWave (const OutWavePar &OWX);	// Set OutWave parameters
-		void SetTimeSeq (vector <double> *Tseq);	// Set vector of photon arrival times
-		void CreateOutWave ();		// Create OutWave
-		void PrintOutWave ();		// Print all values of output signal
-		void Draw ();				// Draw OutWave
-		vector <double> OutWave;	// Output waveform
-		TH1F *NPhe;					// Number of photons created 0, 1 and 2 phe
-		TH1F *PA;					// Area under pulse SPE (DPE)
+			Double_t Period; // Time between samples of OutWave
+			Double_t Gain;   // Units of ADC
+			Int_t Num ;      // Number of samples in OutWave
+			Double_t Delay;  // Delay from "0" of abs.time to "0" sample of OutWave
+		};      
+		void SetPMT (PMT* PMTX);
+		void SetOutWave (const OutWavePar &OWX); // Set OutWave parameters
+		void SetTimeSeq (vector <double> *Tseq); // Set vector of photon arrival times
+		void CreateOutWave ();   // Create OutWave
+		void PrintOutWave ();    // Print all values of output signal
+		void Draw ();            // Draw OutWave
+		vector <double> OutWave; // Output waveform
+		TH1F *NPhe;              // Number of photons created 0, 1 and 2 phe
+		TH1F *PA;                // Area under pulse SPE (DPE)
 	private:
 		PMT *fPMT;
 		OutWavePar fOWX;

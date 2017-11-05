@@ -31,7 +31,6 @@ void MakeWave::SetSPE (const SPEPar &SPEX) {
 		fSPEX.Domain = fSPEX.Width * sqrt(log2(1/fSPEX.Trig));
 		Double_t lrange = (fSPEX.Width - fSPEX.Domain)/2;	// Left end of SPE domain range
 		Double_t rrange = (fSPEX.Width + fSPEX.Domain)/2;	//Right end of SPE domain range
-	//	cout << "lrange = " << lrange << " and rrange = " << rrange << endl;
 		fSPE = new TF1("SPE","gaus(0)",lrange,rrange);
 		fSPE->SetParameter(0, 1);		//Amplitude of gaussian ( = 1 )
 		fSPE->SetParameter(1, fSPEX.Width/2);	//Center
@@ -46,15 +45,20 @@ void MakeWave::SetSPE (const SPEPar &SPEX) {
 	cout << "SPE signal was set" << endl;
 }
 
+//Set PMT parameters
+void MakeWave::SetPMT (PMT *PMTX) {
+	fPMT = PMTX;
+}
+
 //Set OutWave parameters
-void MakeWave::SetParams (const OutWavePar &OWX) {
+void MakeWave::SetOutWave (const OutWavePar &OWX) {
 	fOWX = OWX;
 	cout << "Parameters were set" << endl;
 }
 
 //Set sequence of photon times
 void MakeWave::SetTimeSeq (vector <double> *Tseq) {
-	ftimeseq = Tseq;	//now addresses of ftimeseq and Tseq are equal (pointer Tseq created in main.cpp)
+	ftimeseq = Tseq;	//Now addresses of ftimeseq and Tseq are equal (pointer Tseq created in main.cpp)
 	cout << "Sequence of SPE's arrival times was set" << endl;
 }
 
@@ -74,78 +78,43 @@ Bool_t MakeWave::GetIsrnd () {
 void MakeWave::CreateOutWave () {
 	
 	//Initializing variables
-	Double_t sampletime = 0;	//time of sample from "0" of OutWave
-	Double_t arrtime	= 0;	//arrival time from "0" of OutWave
-	OutWave.clear();				//clear vector OutWave
-	OutWave.resize (fOWX.Num, 0);	//clear vector OutWave
-	Double_t SPEAmplSample	= 0;	//random SPE amplitude
-	Double_t SPEDelaySample	= 0;	//random SPE delay
-	Int_t startsample		= 0;	//first sample in SPE domain
-	Int_t finishsample		= 0;	// last sample in SPE domain
-	Bool_t PosAmplSigma		= true;	//is sigma for amplitude >0
-	Bool_t PosDelaySigma	= true;	//is sigma for delay >0
-	Double_t Ampl			= 0;	//amplitude of signal from photon
-	Double_t AmplSigma		= 0;	//sigma of amplitude
-	Bool_t Interaction		= true;	//interaction between photon and PMT
-	
-	//If sigma for ampl or delay <= 0 , don't simulate
-	if (fSPEX.AmplSigma <= 0) {
-		PosAmplSigma	= false;
-		SPEAmplSample	= fSPEX.Ampl;
-	}
-	if (fSPEX.DelaySigma <= 0) {
-		PosDelaySigma	= false;
-		SPEDelaySample	= fSPEX.Delay;
-	}
-	
+	Double_t sampletime = 0;	//Time of sample from "0" of OutWave
+	Double_t arrtime	= 0;	//Arrival time from "0" of OutWave
+	OutWave.clear();				//Clear vector OutWave
+	OutWave.resize (fOWX.Num, 0);	//Clear vector OutWave
+	Double_t SPEAmplSample	= 0;	//Random SPE amplitude
+	Double_t SPEDelaySample	= 0;	//Random SPE delay
+	Int_t startsample		= 0;	//First sample in SPE domain
+	Int_t finishsample		= 0;	// Last sample in SPE domain
+	Double_t Ampl			= 0;	//Amplitude of signal from photon
+	Double_t AmplSigma		= 0;	//Sigma of amplitude
+	Double_t Delay			= 0;	//Delay of SPE
+	Int_t NumPhe			= 0;	//Number of emitted photoelectrons
+	Double_t PA_Sum 		= 0;	//PulseArea for photon interaction
+	Int_t InteractType		= 0;	//Interaction Type: 0 - no interaction;
+									//1 or 2 - for Nphe in PC, 3 - for 1phe in 1dyn
+		
 	//Go along all arrival times
 	for (int i = 0; i < int(ftimeseq->size()); i++) {		
-		Interaction = true;
+		ShootPhoton (&NumPhe, &Ampl, &AmplSigma, &InteractType, &Delay);	//Define interaction type
+		PA_Sum = 0;	//Initialize PulseArea value
 		
-		if (fRND.Rndm() < fSPEX.Pphe_PC) {
-		//If photon created any phe in PC
-			AmplSigma = fSPEX.AmplSigma;
+		for (int k=0; k<NumPhe; k++) {
 			
-			if (fRND.Rndm() < fSPEX.DPE_PC) {
-			//If photon created 2 phe in PC				
-				Ampl = fSPEX.Ampl_DPE_PC;	//Amplitude from double photoelectron
-				NPhe->Fill(2);	//Fill histogram with 2phe
-			//	cout << i << " photon created 2 phe in PC" << endl;
-			}
-			else {
-			//else photon created 1 phe in PC
-				Ampl = fSPEX.Ampl;	//Single photoelectron amplitude
-				NPhe->Fill(1);	//Fill histogram with 1phe
-			//	cout << i << " photon created 1 phe in PC" << endl;
-			}
-		}
-		else {
-		//else check for interact with 1 dynode
-			if (fRND.Rndm() < fSPEX.Pphe_1d) {
-			//If photon created phe in 1dyn
-				AmplSigma = fSPEX.AmplSigma_1d;
-				Ampl = fSPEX.Ampl * fSPEX.ArbAmpl_1d;
-				NPhe->Fill(3);	//"3" respond to 1phe from 1 dynode
-			//	cout << i << " photon created 1 phe in 1 dynode " << endl;
-			}
-			else {
-			//else photon didn't interact with PMT
-				Interaction = false;
-				NPhe->Fill(0);	//Fill histogram with no phe
-			//	cout << i << " photon didn't create any phe" << endl;
-			}
-		}
-		
-		if (Interaction) {
-			//If sigma for ampl or delay >0 , simulate
-			if (PosAmplSigma)
+			//If sigma for ampl or delay >0 , spread it
+			if (fSPEX.AmplSigma > 0)
 				SPEAmplSample	= fRND.Gaus(Ampl, AmplSigma);
-			if (PosDelaySigma)
-				SPEDelaySample	= fRND.Gaus(fSPEX.Delay, fSPEX.DelaySigma);
+			else
+				SPEAmplSample	= Ampl;
+			if (fSPEX.DelaySigma > 0)
+				SPEDelaySample	= fRND.Gaus(Delay, fSPEX.DelaySigma);
+			else
+				SPEDelaySample	= Delay;
 			
-			//For simulated amplitude fill PulseArea histogram
-			PA->Fill(fSPE->GetParameter(2) * sqrt(2*TMath::Pi()) * abs(SPEAmplSample)/(ns*mV));
-			
+			//Set value for add it to PulseArea histogram
+			//In case of 2phe this value will first increase before addition
+			PA_Sum += fSPE->GetParameter(2) * sqrt(2*TMath::Pi()) * abs(SPEAmplSample)/(ns*mV);
+
 			//Calculate left and right samples including SPE
 			arrtime = (*ftimeseq)[i] + SPEDelaySample - fOWX.Delay;
 			startsample 	=  ceil((arrtime + fSPE->GetXmin())/fOWX.Period);
@@ -153,20 +122,25 @@ void MakeWave::CreateOutWave () {
 			if (startsample < 0)
 				startsample = 0;
 			if (finishsample > fOWX.Num - 1)
-				finishsample = fOWX.Num - 1;			
-		//	cout << "for " << i << " SPE AMPL=" << SPEAmplSample/mV << " mV";
-		//	cout << " ARRTIME=" << (arrtime + fOWX.Delay)/ns << " ns" << endl;		
-		//	cout << "Write from " << startsample << " to " << finishsample << " samples";
-		//	cout << " (Domain = " << fSPEX.Domain << ")" << endl;
-		
+				finishsample = fOWX.Num - 1;
+			
+		/*	if (InteractType==3) {
+				cout << "It was interaction in 1st dynode at " << (arrtime + fOWX.Delay)/ns << " ns" << endl;
+				cout << "Ampl= ";
+			}
+		*/
 			//Add SPE to OutWave
 			for (int sample = startsample; sample <= finishsample; sample++) {
 				sampletime = sample*fOWX.Period;
 				OutWave[sample] += SPEAmplSample*(fSPE->Eval(sampletime - arrtime))/fOWX.Gain;
-			//	cout << "\tfor " << sample << " sample (" << sampletime/ns << " ns) added ";
-			//	cout << SPEAmplSample*(fSPE->Eval(sampletime - arrtime))/fOWX.Gain << endl;
 			}
 		}
+		
+		if 	(!!NumPhe) {
+			//For simulated amplitude fill PulseArea histogram
+			PA->Fill(PA_Sum);
+		}
+		
 	}
 //	cout << "OutWave was created" << endl;
 }
@@ -179,25 +153,60 @@ void MakeWave::CreateOutWaveOld() {
 	vector <double> SPEAmplVec(ftimeseq->size());
 	vector <double> SPEDelayVec(ftimeseq->size());	
 	for (int i = 0; i < int(ftimeseq->size()); i++) {
-	//	cout << "before random" << endl;
-	//	cout << "for " << i << " SPE AMPL=" << SPEAmplVec[i] << "and DEL=" << SPEDelayVec[i] << endl;
 		if (fisrnd == true) {
 			fRND.SetSeed(0);
 		}
 		SPEAmplVec[i] 	= fRND.Gaus(1, fSPEX.AmplSigma/fSPEX.Ampl);
 		SPEDelayVec[i] 	= fRND.Gaus(fSPEX.Delay, fSPEX.DelaySigma);
-	//	cout << "after random" << endl;
-	//	cout << "for " << i << " SPE AMPL=" << SPEAmplVec[i] << "and DEL=" << SPEDelayVec[i] << endl;
 	}
 	for (int sample = 0; sample < fOWX.Num; sample++) {
 		t = fOWX.Delay + sample*fOWX.Period;
 		for (int i = 0; i < int(ftimeseq->size()); i++) {
 			OutWave[sample] += (SPEAmplVec[i])*(fSPE->Eval(t - SPEDelayVec[i] - (*ftimeseq)[i]))/fOWX.Gain;
-		//	cout << "for " << sample << " sample added ";
-		//	cout << (SPEAmplVec[i])*(fSPE->Eval(t - SPEDelayVec[i] - (*ftimeseq)[i]))/fOWX.Gain << endl;
 		}
 	}
 //	cout << "OutWave was created"<< endl;
+}
+
+//Define interaction type and, respectively, set Ampl, Ampl. sigma and Number of phe
+void MakeWave::ShootPhoton (Int_t *NumPhe, Double_t *Ampl, Double_t *AmplSigma, Int_t *InteractType, Double_t *Delay) {
+	Double_t RND	= 0;	//Random in range 0..1 defining interact. type
+	RND = fRND.Rndm();
+	
+	if (RND < fPMT->GetPphe_PC()) {
+	//If photon created any phe in PC
+		*AmplSigma	= fSPEX.AmplSigma;
+		*Ampl		= fSPEX.Ampl;
+		*Delay		= fSPEX.Delay;
+		
+		if (RND < fPMT->GetDPE() * fPMT->GetPphe_PC()) {
+		//If photon created 2 phe in PC				
+			*NumPhe			= 2;
+			*InteractType	= 2;
+		}
+		else {
+		//else photon created 1 phe in PC
+			*NumPhe			= 1;
+			*InteractType	= 1;
+		}
+	}
+	else {
+	//else check for interact with 1 dynode
+		if (RND > 1 - (1 - fPMT->GetPphe_PC()) * fPMT->GetPphe_1d()) {
+		//If photon created phe in 1dyn
+			*AmplSigma = fSPEX.AmplSigma * fPMT->GetArbAmpl_1d();
+			*Ampl	= fSPEX.Ampl * fPMT->GetArbAmpl_1d();
+			*Delay	= fSPEX.Delay - fPMT->GetTOF_1d();
+			*NumPhe			= 1;
+			*InteractType	= 3;
+		}
+		else {
+		//else photon didn't interact with PMT
+			*NumPhe			= 0;
+			*InteractType	= 0;
+		}
+	}
+	NPhe->Fill(*InteractType);	//Fill histogram with Nphe
 }
 
 //Print OutWave
@@ -218,6 +227,6 @@ void MakeWave::Draw (TString name) {
 	g1->SetTitle("Waveform");
 	g1->Draw();
 	if (name != "")
-		c1->SaveAs(name);	//graph is closed when enabled
-	c1->WaitPrimitive();
+		c1->SaveAs(name);	//Graph is closed when enabled
+//	c1->WaitPrimitive();	
 }

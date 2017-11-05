@@ -7,6 +7,7 @@
 #include <TString.h>
 #include "SystemOfUnits.h"
 #include <TH1.h>
+#include "PMT.h"
 
 namespace CLHEP {
 	static const double mV = 1.e-3*volt;
@@ -28,17 +29,6 @@ class MakeWave
 			Double_t Delay;			//Delay of SPE signal
 			Double_t DelaySigma;	//Sigma for SPE delay
 			Double_t Domain;		//Domain width of SPE
-			Double_t QE;			//Quantum Efficiency (full)
-			Double_t DPE_PC;		//Double Photoelectron Emission = P(2phe)/(P(2phe)+P(1phe)) for PC
-			Double_t QE_1d;			//Quantum Efficiency for 1dyn (only 1phe)
-			Double_t ArbCurr_1d;	//Current(1d)/Current(PC) for SPE
-			Double_t ArbAmpl_1d;	//Ampl(1d)/Ampl(PC) for SPE
-			Double_t AmplSigma_1d;	//Sigma for amplitude from 1dyn
-			Double_t GF_1d;			//Arb. geometrical factor of 1dyn
-			Double_t QE_1d_ratio;	//auxiliary quantity
-			Double_t Pphe_PC;		//Probability of photoeffect on PC
-			Double_t Pphe_1d;		//Probability of photoeffect on 1dyn for photons passed PC
-			Double_t Ampl_DPE_PC;	//Amplitude of signal from 2phe from PC
 		};
 		//OutWave Parameters
 		struct OutWavePar {
@@ -48,7 +38,8 @@ class MakeWave
 			Double_t Delay;		//Delay from "0" of abs.time to "0" sample of OutWave
 		};		
 		void SetSPE (const SPEPar &SPEX);	//Set SPE parameters
-		void SetParams (const OutWavePar &OWX);	//Set OutWave parameters
+		void SetPMT (PMT *PMTX);
+		void SetOutWave (const OutWavePar &OWX);	//Set OutWave parameters
 		void SetTimeSeq (vector <double> *Tseq);	//Set vector of photon arrival times
 		void CreateOutWave ();		//Create OutWave
 		void CreateOutWaveOld();	//Create OutWave (old algorithm)
@@ -60,6 +51,8 @@ class MakeWave
 		TH1F *NPhe;					//Number of photons created 0, 1 and 2 phe
 		TH1F *PA;					//Area under pulse SPE (DPE)
 	private:
+		void ShootPhoton (Int_t *NumPhe, Double_t *Ampl, Double_t *AmplSigma, Int_t *InteractType, Double_t *Delay);
+		PMT *fPMT;
 		SPEPar fSPEX;
 		OutWavePar fOWX;
 		vector <double> *ftimeseq;

@@ -40,7 +40,7 @@ void MakeWave::SetSPE (const SPEPar &SPEX) {
 	
 	//Right end of PulseArea hist
 	Double_t XmaxPA = 2 * fSPEX.Width * (abs(fSPEX.Ampl) + 3*fSPEX.AmplSigma)/(ns*mV);
-	PA		= new TH1F("PA","PulseArea[mV*ns]",100,0,XmaxPA);	//Area under pulse SPE (DPE)
+	PA		= new TH1F("PA","PulseArea[mV*ns]",1000,0,XmaxPA);	//Area under pulse SPE (DPE)
 	NPhe	= new TH1F("NPhe","NumberOfPhe",4,0,4);			//Number of photons created 0, 1 and 2 phe
 	cout << "SPE signal was set" << endl;
 }
@@ -123,12 +123,7 @@ void MakeWave::CreateOutWave () {
 				startsample = 0;
 			if (finishsample > fOWX.Num - 1)
 				finishsample = fOWX.Num - 1;
-			
-		/*	if (InteractType==3) {
-				cout << "It was interaction in 1st dynode at " << (arrtime + fOWX.Delay)/ns << " ns" << endl;
-				cout << "Ampl= ";
-			}
-		*/
+		
 			//Add SPE to OutWave
 			for (int sample = startsample; sample <= finishsample; sample++) {
 				sampletime = sample*fOWX.Period;

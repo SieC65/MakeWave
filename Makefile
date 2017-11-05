@@ -1,3 +1,4 @@
+FLAGS = -Wall -O3 `root-config --cflags --glibs`
 all:
-	g++ -c MakeWave.cpp -Wall -O3 -I. `root-config --cflags --glibs` -o MakeWave.o
-	g++ -o MakeWave.exe -Wall -O3 `root-config --cflags --glibs` -lrt main.cpp MakeWave.o
+	g++ -c MakeWave.cpp $(FLAGS) -o MakeWave.o
+	g++ -o MakeWave.exe $(FLAGS) -lrt main.cpp MakeWave.o

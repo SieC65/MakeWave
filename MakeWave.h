@@ -20,9 +20,11 @@ class MakeWave
 		void SetPMT (RED::PMT* PMT); // Set PMT object
 		void SetOutWave (Double_t Period, Double_t Gain, Int_t NumSamples, Double_t Delay); // Set OutWave parameters
 		void SetPhotonTimes (vector <double> *PhotonTimes); // Set vector of photon arrival times
+		
 
 		// ACTIONS
 		void CreateOutWave ();   // Create OutWave
+		void test(RED::PMT_R11410 &); // Friend of PMT_R11410, draws hists
 
 		// OUTPUT
 		void PrintOutWave ();    // Print all values of output signal
@@ -47,6 +49,37 @@ class MakeWave
 		
 		vector <double> *fPhotonTimes; // Photons arrival times
 		void AddPulseArray (RED::PMT::PulseArray *Pulses); // Adding pulses to output waveform
+};
+
+class MakePhotons
+{
+	public:
+	
+		MakePhotons ();
+		
+		// SETTERS
+		void SetTau (Double_t TauFast, Double_t TauSlow); // Set tau for fast & slow Sc exp decay functions
+		void SetFastFrac (TF1* FastER_func, TF1* FastNR_func);  // Set functions of fast Sc fractions depend on photons number for ER and NR
+		void SetFastFrac (Double_t FastER, Double_t FastNR); // Set constant fast Sc fractions
+		void SetDefFastFract (); // Set default values for fast fraction functions
+		
+		// GETTERS
+		vector <double> GetSimPhotonTimes() {return fSimPhotonTimes;}
+		
+		// ACTIONS
+		void SimulatePhotons(Int_t NumPhotons, Double_t FracNR);
+
+	private:
+		enum {constant, function} fFast_type; // Show if fast Sc fraction depends on photons number
+		Int_t fMinPhotons;  // Minimum photons number for default function of fast Sc fraction
+		Int_t fMaxPhotons;  // Maximum photons number (right edge of function)
+		Double_t fTauFast;  // Tau for fast scintillation pdf
+		Double_t fTauSlow;  // Tau for slow scintillation pdf
+		Double_t fFastER;   // Fraction of fast component for scintillation from ER
+		Double_t fFastNR;   // The same for NR
+		TF1* fFastER_func;  // Fraction of fast component for Sc from ER depends on photons number
+		TF1* fFastNR_func;  // The same for NR
+		vector <double> fSimPhotonTimes; // Output vector of photons arrival times
 };
 
 #endif // MakeWave_H

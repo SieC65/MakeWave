@@ -107,6 +107,8 @@ namespace RED
 	// Hamamatsu R11410-20 PMT
 	class PMT_R11410 : public PMT
 	{
+			friend void test (PMT_R11410 &);
+			
 		public:
 		
 			 PMT_R11410();
@@ -178,8 +180,8 @@ namespace RED
 			TH1F* DarkTimeHist;  // Time of dark pulses
 			TH1F* DarkAmplHist;  // Amplitude of dark pulses
 			TH1F *NumPheHist;    // Number of photoelectron created by 1 photon:
-			                     // -1 or -2: 1 or 2 phe in 1dyn
-			                     // +1 or +2: 1 or 2 phe in PC
+								 // -1 or -2: 1 or 2 phe in 1dyn
+								 // +1 or +2: 1 or 2 phe in PC
 			TH1F *PulseAreaHist; // Area under pulse SPE (DPE)
 			
 		private:

@@ -12,6 +12,7 @@
 
 #include "MakeWave.h"
 #include "PMT_R11410.hh"
+#include <REDFile/File.hh>
 
 using CLHEP::mV;
 using CLHEP::ns;
@@ -130,6 +131,11 @@ int main () {
 	// Create Tseq vector of photons arrival times
 	vector <Double_t> Tseq;
 	SetTseq (AT, &Tseq, TseqArr, sizeof(TseqArr)/sizeof(TseqArr[0]));
+	
+	// Test of MakePhotons class here
+	MakePhotons *Photons = new MakePhotons ();
+	Photons->SimulatePhotons(150, 0.3);
+	Tseq = Photons->GetSimPhotonTimes();
 
 	cout << endl << "Program will start" << endl << endl;
 
@@ -249,8 +255,8 @@ void AverageOW (int DebugN, Double_t Period, Double_t Gain, Int_t NumSamples, Do
 	TGraph *g2  = new TGraph (NumSamples);
 	for (int i = 0; i < NumSamples; i++) {
 		g2->SetPoint (i, (Delay + i*Period)/ns, MeanOutWave[i]);
-	//	cout << "point num " << i << "at time= " << (Delay + i*Period)/ns << " ns ";
-	//	cout << "with ampl= " << MeanOutWave[i] << " ADC-units was added" <<endl;
+		cout << "point num " << i << "at time= " << (Delay + i*Period)/ns << " ns ";
+		cout << "with ampl= " << MeanOutWave[i] << " ADC-units was added" <<endl;
 	}
 	g2->SetTitle("OutWave;Time, ns;Amplitude, ADC units");
 	g2->Draw();

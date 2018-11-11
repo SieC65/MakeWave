@@ -70,15 +70,24 @@ class MakePhotons
 		void SimulatePhotons(Int_t NumPhotons, Double_t FracNR);
 
 	private:
-		enum {constant, function} fFast_type; // Show if fast Sc fraction depends on photons number
+	
+		// Auxiliary
+		
+		enum func_type {constant, function} fFast_type; // Show if fast Sc fraction depends on photons number
+		enum InterType {ER, NR} fInterType; // Interaction type
 		Int_t fMinPhotons;  // Minimum photons number for default function of fast Sc fraction
 		Int_t fMaxPhotons;  // Maximum photons number (right edge of function)
+		void SimPhTimes(Int_t NumPhotons, InterType recoil, TF1* FastProbFunc, TF1* ExpDecay);
+		
+		// Physics
 		Double_t fTauFast;  // Tau for fast scintillation pdf
 		Double_t fTauSlow;  // Tau for slow scintillation pdf
 		Double_t fFastER;   // Fraction of fast component for scintillation from ER
 		Double_t fFastNR;   // The same for NR
 		TF1* fFastER_func;  // Fraction of fast component for Sc from ER depends on photons number
 		TF1* fFastNR_func;  // The same for NR
+		
+		// Output
 		vector <double> fSimPhotonTimes; // Output vector of photons arrival times
 };
 

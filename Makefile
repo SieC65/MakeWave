@@ -2,8 +2,8 @@ FLAGS = -Wall -O3 `root-config --cflags --glibs`
 
 all: MakeWave
 
-MakeWave: main.o MakeWave.o PMT_R11410.o
-	g++ $(FLAGS) main.o MakeWave.o PMT_R11410.o -o MakeWave
+MakeWave: main.o MakeWave.o PMT_R11410.o Test.o
+	g++ $(FLAGS) main.o MakeWave.o PMT_R11410.o Test.o -o MakeWave
 
 main.o: main.cpp
 	g++ $(FLAGS) -c main.cpp
@@ -13,6 +13,9 @@ MakeWave.o: MakeWave.cpp
 
 PMT_R11410.o: PMT_R11410.cpp
 	g++ $(FLAGS) -c PMT_R11410.cpp
+
+Test.o: Test.cpp
+	g++ $(FLAGS) -c Test.cpp
 
 clean:
 	rm -rf *.o MakeWave

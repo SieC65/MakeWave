@@ -12,6 +12,7 @@
 
 #include "MakeWave.h"
 #include "PMT_R11410.hh"
+#include "Test.h"
 #include <REDFile/File.hh>
 
 using CLHEP::mV;
@@ -52,6 +53,7 @@ void PrintTseq (const vector <Double_t> *Tseq);
 void AverageOW (int DebugN, Double_t Period, Double_t Gain, Int_t NumSamples, Double_t Delay, MakeWave *aex);
 
 int main () {
+	cout << "OK, lets go" << endl;
 	new TApplication("Canvas", 0, 0);
 	Int_t DebugNum  = 1; // Number of OutWaves for averaging by AverageOW
 
@@ -134,7 +136,7 @@ int main () {
 	
 	// Test of MakePhotons class here
 	MakePhotons *Photons = new MakePhotons ();
-	Photons->SimulatePhotons(150, 0.3);
+	Photons->SimulatePhotons(1500, 0.3);
 	Tseq = Photons->GetSimPhotonTimes();
 
 	cout << endl << "Program will start" << endl << endl;

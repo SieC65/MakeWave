@@ -1,6 +1,9 @@
 #include <iostream>
 
+#include <TCanvas.h>
+#include <TH1.h>
 #include <TGraph.h>
+//#include <TString.h>
 #include "SystemOfUnits.h"
 
 #include "MakeWave.h"
@@ -14,9 +17,13 @@ using CLHEP::ns;
 
 // Simple constructor
 MakeWave::MakeWave () {
-	PhotonPulse = 0;
-	DarkPulse   = 0;
-	fPMT        = 0;
+	fPhotoElectrons   = 0;
+	fDarkElectrons    = 0;
+	fPMT              = 0;
+	fDarkTimeHist     = 0;
+	fDarkAmplHist     = 0;
+	fNumPheHist       = 0;
+	fPulseAreaHist    = 0;
 	//cout << "MakeWave object was created" << endl;
 }
 
@@ -41,6 +48,16 @@ void MakeWave::SetPhotonTimes (vector <double>* PhotonTimes) {
 	//cout << "Sequence of SPE's arrival times was set" << endl;
 }
 
+// Set some default parameters
+void MakeWave::SetDefaults(){
+	fPMT = new RED::PMT_R11410();
+	fPMT->SetDefaults();
+	fPeriod     = 2*ns;
+	fGain       = 0.125*mV;
+	fNumSamples = 150000;
+	fDelay      = -150000*ns;
+}
+
 // Creating OutWave
 void MakeWave::CreateOutWave () {
 	//cout << "Creating OutWave..." << endl;
@@ -48,32 +65,41 @@ void MakeWave::CreateOutWave () {
 	fOutWave.clear();              //  Clear vector OutWave
 	fOutWave.resize (fNumSamples, 0); // Resize vector OutWave
 	Char_t NumPhe = 0;
-	
-	// Create PulseArray vector
-	if (!PhotonPulse) {
-		PhotonPulse = new RED::PMT::PulseArray;
-	}
-	else PhotonPulse->clear();
 
-	// Create DarkPulseArray vector
-	if (!DarkPulse) {
-		DarkPulse = new RED::PMT::PulseArray;
-	}
-	else DarkPulse->clear();
+// ADD SPE FROM PHOTONS
 
-	/// ADD SPE FROM PHOTONS
-	//cout << "adding photons" << endl;
-	// Generate vector Pulse of PulseArray type
+	// Check if PulseArray vector fPhotoElectrons exists
+	if (!fPhotoElectrons) {
+		fPhotoElectrons = new RED::PMT::PulseArray;
+	}
+	else fPhotoElectrons->clear();
+
+	// Histogram for number of photons created 0, 1 and 2 phe
+	// -2: 2phe from 1d; -1: 1phe from 1d; 0: no interaction
+	// +1: 1phe from PC; +2: 2phe from PC
+	if (!fNumPheHist) {
+		fNumPheHist   = new TH1F ("fNumPheHist","NumberOfPhe",5,-2.5,2.5);
+	}
+
+	// Generate fPhotoElectrons, add them to OutWave and fill the phe number hist
 	for (unsigned int i = 0; i < fPhotonTimes->size(); i++) {
-		NumPhe = fPMT->OnePhoton (&(fPhotonTimes->at(i)), *PhotonPulse, true);
+		NumPhe = fPMT->OnePhoton (&(fPhotonTimes->at(i)), *fPhotoElectrons, true);
+		fNumPheHist->Fill(NumPhe);
 	}
-	AddPulseArray (PhotonPulse);
+	AddPulseArray (fPhotoElectrons);
 
-	/// ADD DARK COUNTS
-	//cout << "adding dark" << endl;
-	// Generate vector DarkPulse of PulseArray type
-	fPMT->GenDCR (fDelay - (fPMT->GetXmax() - fPMT->GetXmin()), fDelay + fNumSamples * fPeriod, *DarkPulse);
-	AddPulseArray (DarkPulse);
+// ADD DARK COUNTS
+
+	// Check if PulseArray vector fDarkElectrons exists
+	if (!fDarkElectrons) {
+		fDarkElectrons = new RED::PMT::PulseArray;
+	}
+	else fDarkElectrons->clear();
+
+	// Generate dark electrons and add them to OutWave
+	fPMT->GenDCR (fDelay - (fPMT->GetXmax() - fPMT->GetXmin()), fDelay + fNumSamples * fPeriod, *fDarkElectrons);
+	AddPulseArray (fDarkElectrons);
+
 	//cout << "OutWave was created" << endl;
 }
 
@@ -107,17 +133,81 @@ void MakeWave::AddPulseArray (RED::PMT::PulseArray *Pulses) {
 	}
 }
 
-// Draws histograms
-void MakeWave::test(RED::PMT_R11410 &) {
-	// Histograms
-	TH1F* TimeHist;      // Delay time from photon hit to pulse
-	TH1F* AmplHist;      // Amplitude of pulse from photon	
-	TH1F* DarkTimeHist;  // Time of dark pulses
-	TH1F* DarkAmplHist;  // Amplitude of dark pulses
-	TH1F *NumPheHist;    // Number of photoelectron created by 1 photon:
-	                     // -1 or -2: 1 or 2 phe in 1dyn
-	                     // +1 or +2: 1 or 2 phe in PC
-	TH1F *PulseAreaHist; // Area under pulse SPE (DPE)
+// Draw histograms
+void MakeWave::DrawHists() {
+
+	// CREATE HISTOGRAMS
+
+	// For fPhotoElectrons
+	// if (!TimeHist) {
+	// 	Double_t LowTime  = 0; // Lower bound of time delay for histogram;
+	// 	Double_t HighTime = fPMT->GetTOFe() + 3 * fPMT->GetTOFe_Sigma(); // Upper bound of time delay for histogram;
+	// 	TimeHist = new TH1F ("TimeHist", "Time delay from photon hit to pulse", 100, LowTime, HighTime);
+	// }
+	// if (!AmplHist) {
+	// 	Double_t LowAmpl  = 0; //GetAmpl() - 3 * GetAmpl_Sigma(); // Lower bound of amplitude for histogram;
+	// 	Double_t HighAmpl = fPMT->GetAmpl() + 3 * fPMT->GetAmpl_Sigma(); // Upper bound of amplitude for histogram;
+	// 	AmplHist = new TH1F ("AmplHist", "Amplitude of pulse", 100, LowAmpl, HighAmpl);
+	// }
+	// TCanvas *c4 = new TCanvas();
+	// c4->SetTitle("Distribution of amplitude and time for Photon Pulses");
+	// c4->Divide(2,1);
+	// c4->cd(1);
+	// R11->AmplHist->Draw();
+	// c4->cd(2);
+	// R11->TimeHist->Draw();
+
+	// For pulse area
+	if (!fPulseAreaHist) {
+		Double_t Low_Area  = 0;
+		Double_t High_Area = 3*fPMT->GetArea()/(ns*mV);
+		fPulseAreaHist  = new TH1F ("fPulseAreaHist","PulseArea[mV*ns]",1000, Low_Area, High_Area);
+	}
+	for (unsigned int i=0; i< fPhotoElectrons->size(); i++) {
+		RED::PMT::Pulse OnePulse = (*fPhotoElectrons).at(i);
+		fPulseAreaHist->Fill (OnePulse.fAmpl * fPMT->GetShapeArea() / (mV*ns));
+	}
+	TCanvas *c3 = new TCanvas();
+	c3->SetTitle("Pulse Area");
+	c3->cd();
+	c3->SetLogy();
+	fPulseAreaHist->Draw();
+
+	// For dark electrons
+	if (!fDarkTimeHist) {
+		Double_t LowDarkTime  = fDelay;
+		Double_t HighDarkTime = fDelay + fPeriod*fNumSamples;
+		fDarkTimeHist = new TH1F ("fDarkTimeHist", "Abs time of dark pulse", 100, LowDarkTime, HighDarkTime);
+	}
+	if (!fDarkAmplHist) {
+		Double_t LowDarkAmpl  = fPMT->GetAmpl() - 3 * fPMT->GetAmpl_Sigma();
+		Double_t HighDarkAmpl = fPMT->GetAmpl() + 3 * fPMT->GetAmpl_Sigma();
+		fDarkAmplHist = new TH1F ("fDarkAmplHist", "Amplitude of dark pulse", 100, LowDarkAmpl, HighDarkAmpl);
+	}
+	for (unsigned int i =0; i< fDarkElectrons->size(); i++) {
+		RED::PMT::Pulse DarkPulse = (*fDarkElectrons).at(i);
+		fDarkTimeHist->Fill (DarkPulse.fTime);
+		fDarkAmplHist->Fill (DarkPulse.fAmpl);
+	}
+	TCanvas *c5 = new TCanvas();
+	c5->SetTitle("Distribution of amplitude and time for Dark Pulses");
+	c5->Divide(2,1);
+	c5->cd(1);
+	fDarkAmplHist->Draw();
+	c5->cd(2);
+	fDarkTimeHist->Draw();
+	c5->WaitPrimitive();
+
+	// Draw SPE Shape
+	fPMT->DrawShape("user-defined SPE shape;time, ns;Amplitude, MV");
+	
+	// For number of fPhotoElectrons
+	TCanvas *c2 = new TCanvas();
+	c2->SetTitle("Number of phe");
+	c2->cd();
+	c2->SetLogy();
+	fNumPheHist->Draw();
+	fNumPheHist->SetTitle("Number of phe resulted (-1 or -2 == 1 or 2 phe from 1st dynode);N(phe);Events");
 }
 
 // Print OutWave
@@ -132,7 +222,7 @@ void MakeWave::PrintOutWave() {
 // Draw OutWave
 void MakeWave::DrawOutWave () {
 	cout << "Drawing OutWave..." << endl;
-	TGraph *g1 = new TGraph(fNumSamples);
+	TGraph  *g1 = new TGraph(fNumSamples);
 	for (int i = 0; i < fNumSamples; i++) {
 		g1->SetPoint(i, (fDelay + i*fPeriod)/ns, fOutWave[i]);
 	}

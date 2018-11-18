@@ -1,7 +1,5 @@
 #ifndef PMT_R11410_HH
 #define PMT_R11410_HH
-
-#include <TH1.h>
 #include <TF1.h>
 #include <TSpline.h>
 #include <TRandom3.h>
@@ -32,7 +30,8 @@
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
 
-namespace CLHEP {
+namespace CLHEP 
+{
 	static const double mV = 1.e-3*CLHEP::volt;
 }
 using CLHEP::ns;
@@ -82,6 +81,9 @@ namespace RED
 			virtual Double_t GetYmin()         const = 0; // Minimum value of SPE Shape
 			virtual Double_t GetArea()         const = 0; // Pulse area of SPE
 			virtual Double_t Eval (Double_t t) const = 0; // Value of SPE Shape at time t
+			virtual Double_t GetShapeArea()    const = 0; // Pulse area of SPE Shape
+			virtual Double_t GetAmpl()         const = 0;
+			virtual Double_t GetAmpl_Sigma()   const = 0;
 
 			// OUTPUT
 			virtual void Print             (Option_t *option="") const { ; } // Print all PMT parameters
@@ -173,16 +175,6 @@ namespace RED
 			void PrintCalcParams   (Option_t *option="") const;
 			void PrintProbs        (Option_t *option="") const;
 			void DrawShape (const char* title="SPE Shape") const;
-			
-			// Histograms
-			TH1F* TimeHist;      // Delay time from photon hit to pulse
-			TH1F* AmplHist;      // Amplitude of pulse from photon	
-			TH1F* DarkTimeHist;  // Time of dark pulses
-			TH1F* DarkAmplHist;  // Amplitude of dark pulses
-			TH1F *NumPheHist;    // Number of photoelectron created by 1 photon:
-								 // -1 or -2: 1 or 2 phe in 1dyn
-								 // +1 or +2: 1 or 2 phe in PC
-			TH1F *PulseAreaHist; // Area under pulse SPE (DPE)
 			
 		private:
 		

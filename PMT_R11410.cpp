@@ -13,12 +13,6 @@ namespace RED
 {
 	PMT_R11410::PMT_R11410() {
 		fRND.SetSeed(0);
-		TimeHist      = 0;
-		AmplHist      = 0;
-		DarkTimeHist  = 0;
-		DarkAmplHist  = 0;
-		NumPheHist    = 0;
-		PulseAreaHist = 0;
 		fShape.func   = 0;
 		//cout << "PMT_R11410 object was created" << endl;
 	}
@@ -144,35 +138,14 @@ namespace RED
 		Double_t AmplSigma = 0; // Sigma of SPE amplitude (different for PC and 1dyn)
 		Double_t TOFeMean  = 0; // Mean Time of Flight (different for PC and 1dyn)
 		Double_t TOFeSigma = 0; // Sigma of Time of Flight (different for PC and 1dyn)
-		Double_t PulseArea = 0;
 
-		// Histograms for delay time and amplitude of pulses
-		if (!TimeHist) {
-			Double_t LowTime  = 0;//; // Lower bound of time delay for histogram;
-			Double_t HighTime = GetTOFe() + 3 * GetTOFe_Sigma(); // Upper bound of time delay for histogram;
-			TimeHist = new TH1F ("TimeHist", "Time delay from photon hit to pulse", 100, LowTime, HighTime);
-		}
-		if (!AmplHist) {
-			Double_t LowAmpl  = 0;//GetAmpl() - 3 * GetAmpl_Sigma(); // Lower bound of amplitude for histogram;
-			Double_t HighAmpl = GetAmpl() + 3 * GetAmpl_Sigma(); // Upper bound of amplitude for histogram;
-			AmplHist = new TH1F ("AmplHist", "Amplitude of pulse", 100, LowAmpl, HighAmpl);
-		}
-		
-		// Histogram for area under pulses
-		if (!PulseAreaHist) PulseAreaHist  = new TH1F ("PulseAreaHist","PulseArea[mV*ns]",1000, 0, 3*GetArea()/(ns*mV));
-		// Histogram for number of photons created 0, 1 and 2 phe
-		// -2: 2phe from 1d; -1: 1phe from 1d; 0: no interaction
-		// +1: 1phe from PC; +2: 2phe from PC
-		if (!NumPheHist) NumPheHist   = new TH1F ("NumPheHist","NumberOfPhe",5,-2.5,2.5);
-
-			// We can divide range 0..1 into 5 bands:
-			// 0                    .. fProb_C1            - it was SPE from PC
-			// fProb_C1             .. fProb_C             - it was DPE from PC
-			// fProb_C              .. fProb_C + fProb_1d1 - it was SPE from 1dyn
-			// fProb_C + fProb_1d1  .. fProb_C + fProb_1d  - it was DPE from 1dyn
-			// fProb_C + fProb_1d   .. 1                   - it was no interaction
+		// We can divide range 0..1 into 5 bands:
+		// 0                    .. fProb_C1            - it was SPE from PC
+		// fProb_C1             .. fProb_C             - it was DPE from PC
+		// fProb_C              .. fProb_C + fProb_1d1 - it was SPE from 1dyn
+		// fProb_C + fProb_1d1  .. fProb_C + fProb_1d  - it was DPE from 1dyn
+		// fProb_C + fProb_1d   .. 1                   - it was no interaction
 		RND = fRND.Rndm();
-
 		if (RND > (fProb_C + fProb_1d))
 			NumPhe = 0;
 		else if (RND < fProb_C1)
@@ -184,7 +157,7 @@ namespace RED
 		else
 			NumPhe = -2;
 
-		NumPheHist->Fill(NumPhe);
+		// Tell to user how many phe were created
 		if (fDebug) cout << "At " << *time/ns << " ns";
 		switch ((NumPhe > 0) - (NumPhe < 0)) {
 			case -1:
@@ -206,42 +179,24 @@ namespace RED
 				break;
 		}
 
+		// Simulate time & ampl of spe , fill hists
 		for (int i = 0; i < abs(NumPhe); i++) {
 			OnePulse.fAmpl = fRND.Gaus (AmplMean, AmplSigma);
 			TOFe           = fRND.Gaus (TOFeMean, TOFeSigma);
 			OnePulse.fTime = TOFe + *time;
-			if (fDebug) cout << " with amplitude = " << OnePulse.fAmpl << " and time from '0' of OutWave =" << OnePulse.fTime/ns << " ns" << endl;
+			if (fDebug) cout << " with amplitude = " << OnePulse.fAmpl << " and time =" << OnePulse.fTime/ns << " ns" << endl;
 			electrons.push_back (OnePulse);
-			// Fill histograms
-			AmplHist->Fill (OnePulse.fAmpl);
-			TimeHist->Fill (TOFe);
-			PulseArea += OnePulse.fAmpl * fShapeArea/(mV*ns);
-			PulseAreaHist->Fill(PulseArea);
 		}
 		return NumPhe;
 	}
 
 	void PMT_R11410::GenDCR (Double_t begintime, Double_t endtime, PulseArray& darkelectrons) {
-		// Histogram for time of dark pulses
-		if (!DarkTimeHist) {
-			Double_t LowDarkTime  = begintime;
-			Double_t HighDarkTime = endtime;
-			DarkTimeHist = new TH1F ("DarkTimeHist", "Abs time of dark pulse", 100, LowDarkTime, HighDarkTime);
-		}
-		if (!DarkAmplHist) {
-			Double_t LowDarkAmpl  = GetAmpl() - 3 * GetAmpl_Sigma();
-			Double_t HighDarkAmpl = GetAmpl() + 3 * GetAmpl_Sigma();
-			DarkAmplHist = new TH1F ("DarkAmplHist", "Amplitude of dark pulse", 100, LowDarkAmpl, HighDarkAmpl);
-		}
 		unsigned int DarkNum = fRND.Poisson (fDCR * (endtime - begintime)); // Number of dark counts
 		Pulse DarkPulse;     // Temporary variable for saving each SPE
 		for (unsigned int i = 0; i < DarkNum; i++) {
 			DarkPulse.fAmpl = fRND.Gaus (fAmpl_mean, fAmpl_sigma);
 			DarkPulse.fTime = fRND.Rndm() * (endtime - begintime) + begintime;
 			darkelectrons.push_back (DarkPulse);
-			// Add time to histogram
-			DarkTimeHist->Fill (DarkPulse.fTime);
-			DarkAmplHist->Fill (DarkPulse.fAmpl);
 		}
 		//cout << "It were generated " << DarkNum << " dark counts between " << begintime/ns << " ns and " << endtime/ns << "ns" << endl;
 	}

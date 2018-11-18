@@ -1,6 +1,8 @@
 #ifndef Test_H
 #define Test_H
 
+#include <iostream>
+#include <algorithm>
 #include <vector>
 
 #include <Rtypes.h>
@@ -10,6 +12,11 @@
 #include <TSpline.h>
 #include <TRandom3.h>
 #include "SystemOfUnits.h"
+#include <TApplication.h>
+#include <TCanvas.h>
+#include <TGraph.h>
+
+#include "MakeWave.h"
 
 //using namespace RED;
 using std::vector;
@@ -53,6 +60,31 @@ class MakePhotons
 		
 		// Output
 		vector <double> fSimPhotonTimes; // Output vector of photons arrival times
+};
+
+class MakeTest
+{
+	public:
+
+		MakeTest();
+
+		//SETTERS
+		void SetPhotonsTimes (Double_t *TimesArr); // Set vector of photon arrival times
+
+		//GETTERS
+		vector <Double_t> GetMeanOW  () {return *fMeanOutWave;}
+		vector <Double_t> GetTimesVec() {return *fTimesVec;}
+
+		//ACTIONS
+		void AverageOW (Int_t DebugN, MakeWave* MakeWaveObj); // Create average OutWave for DebugN OutWaves with the same SPE arrival times
+		void DrawOW (MakeWave* MakeWaveObj);
+		void RandPhotonTimes (Int_t number, Double_t leftEdge, Double_t rightEdge); // Set random photon arrival times
+		void PrintTimesVec ();
+
+	private:
+
+		vector <Double_t> *fTimesVec; // vector of arrival times
+		vector <Double_t> *fMeanOutWave; // outwave vector
 };
 
 #endif // Test_H 

@@ -87,10 +87,6 @@ namespace RED
 
 			// OUTPUT
 			virtual void Print             (Option_t *option="") const { ; } // Print all PMT parameters
-			virtual void PrintUsrDefParams (Option_t *option="") const { ; } // Print user-defined PMT parameters
-			virtual void PrintCalcParams   (Option_t *option="") const { ; } // Print calculated PMT parameters
-			virtual void PrintProbs        (Option_t *option="") const { ; } // Print interactions probabilities only
-			virtual void DrawShape (char* title) const { ; } // Draw SPE shape
 			
 			// ACTIONS
 			virtual int  Begin     (PulseArray &electrons) { return(0); }
@@ -109,7 +105,7 @@ namespace RED
 	// Hamamatsu R11410-20 PMT
 	class PMT_R11410 : public PMT
 	{
-			friend void test (PMT_R11410 &);
+			friend void test (PMT_R11410 &TestPMT);
 			
 		public:
 		
@@ -171,10 +167,6 @@ namespace RED
 
 			// OUTPUT INFO
 			void Print             (Option_t *option="") const;
-			void PrintUsrDefParams (Option_t *option="") const;
-			void PrintCalcParams   (Option_t *option="") const;
-			void PrintProbs        (Option_t *option="") const;
-			void DrawShape (const char* title="SPE Shape") const;
 			
 		private:
 		
@@ -215,6 +207,10 @@ namespace RED
 			// ACTIONS
 			// Calculate integral of TSpline object in range (xmin,xmax) by rectangles method
 			Double_t SplineIntegral (TSpline* spline, Double_t xmin, Double_t xmax, Int_t nbins);
+			// Some printing functions
+			void PrintUsrDefParams () const;
+			void PrintCalcParams   () const;
+			void PrintProbs        () const;
 	};
   
 } // namespace

@@ -204,35 +204,32 @@ namespace RED
 	void PMT_R11410::Clear(Option_t *option) { 
 		cout << "Function 'Clear' is not yet implemented" << endl;
 	}
-	
-	void PMT_R11410::DrawShape (const char* title) const {
-		TCanvas *c5 = new TCanvas();
-		c5->SetTitle("SPE Shape");
-		c5->cd();
-		switch (fMode) {
-			case kModeNone:
-				break;
-			case kModeF1 :
-				fShape.func->SetTitle (title);
-				fShape.func->Draw();
-				break;
-			case kModeSpline :
-				fShape.spline->SetTitle (title);
-				fShape.spline->Draw();
-				break;
-		}
-		//c5->WaitPrimitive();
-	}
 
 	void PMT_R11410::Print (Option_t *option) const {
-		cout << endl << "Printing PMT parameters..." << endl;
-		cout << "User-defined parameters:" << endl;
-		PrintUsrDefParams();
-		cout << "Calculated parameters:"   << endl;
-		PrintCalcParams();
+		if (option == std::string("user-defined")) {
+			cout << "User-defined PMT parameters:" << endl;
+			PrintUsrDefParams();
+		}
+		if (option == std::string("calculated")) {
+			cout << "Calculated PMT parameters:"   << endl;
+			PrintCalcParams();
+		}
+		if (option == std::string("probabilities")) {
+			cout << "Interactions probabilities:"  << endl;
+			PrintProbs();
+		}
+		if (option == std::string("")) {
+			cout << "Printing all PMT parameters..." << endl;
+			cout << "User-defined PMT parameters:" << endl;
+			PrintUsrDefParams();
+			cout << "Calculated PMT parameters:"   << endl;
+			PrintCalcParams();
+			cout << "Interactions probabilities:"  << endl;
+			PrintProbs();
+		}
 	}
 	
-	void PMT_R11410::PrintUsrDefParams (Option_t *option) const {
+	void PMT_R11410::PrintUsrDefParams () const {
 		cout << "  SPE shape type   =  ";
 		switch (fMode) {
 			case kModeNone :
@@ -279,7 +276,7 @@ namespace RED
 		cout << " \t//Afterpulses ?"        << endl;
 	}
 	
-	void PMT_R11410::PrintCalcParams (Option_t *option) const {
+	void PMT_R11410::PrintCalcParams () const {
 		PrintProbs();
 		cout <<    "  SPE Shape Area       =  " << fShapeArea/(mV*ns) << " mV*ns";
 		cout << " \t//SPE Pulse Shape Area" << endl;
@@ -302,7 +299,7 @@ namespace RED
 		}
 	}
 
-	void PMT_R11410::PrintProbs (Option_t *option) const {
+	void PMT_R11410::PrintProbs () const {
 		cout << std::setiosflags(std::ios::fixed) << std::setprecision(2);
 		cout <<    "  Total PC probability =  " << fProb_C*100 << " %";
 		cout << " \t//Total interaction probability on Photocathode" << endl;
@@ -396,7 +393,7 @@ namespace RED
 	void PMT_R11410::SetDPE_1d (Double_t DPE_1d) {
 		fDPE_1d = DPE_1d;
 		cout << "set DPE_1d     = " << fDPE_1d << endl;
-}
+	}
 
 	void PMT_R11410::SetQE_1d (Double_t QE_1d) {
 		fQE_1d = QE_1d;

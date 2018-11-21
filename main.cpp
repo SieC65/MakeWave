@@ -12,7 +12,8 @@
 
 #include "MakeWave.h"
 #include "PMT_R11410.hh"
-#include "Test.h"
+#include "SimPhotons.h"
+#include "MakeTest.h"
 //#include <REDFile/File.hh>
 
 using CLHEP::mV;
@@ -82,8 +83,8 @@ int main () {
 	Double_t AP_cont    = 0;        // Afterpulsing probability (continuum)
 	R11->SetParams     (QE, Area_mean, DCR, AP_cont);
 	// Interaction parameters
-	R11->SetDPE_PC     (0.225); // Double Photoelectron Emission probability for PC
-	R11->SetDPE_1d     (0.225); // Double Photoelectron Emission probability for 1dyn
+	R11->SetDPE_PC     (0.225);    // Double Photoelectron Emission probability for PC
+	R11->SetDPE_1d     (0.225);    // Double Photoelectron Emission probability for 1dyn
 	R11->SetQE_1d      (0.105);    // Quantum Efficiency for 1dyn
 	// Geometric parameters
 	R11->SetGain_PC_1d (13);       // Amplification on first gap (PC-1dyn)
@@ -105,7 +106,9 @@ int main () {
 			break;
 	}
 	R11->CalculateParams();
-	R11->Print();
+	R11->Print("user-defined");
+	R11->Print("calculated");
+	R11->Print("probabilities");
 
 // CREATE OUTWAVE
 	
@@ -119,8 +122,8 @@ int main () {
 	MakeWaveObj->SetOutWave (Period, Gain, NumSamples, Delay); // Set OutWave parameters
 
 	// Simulate photons
-	MakePhotons *Photons = new MakePhotons();
-	Int_t NumPhotons = 1500;
+	SimPhotons *Photons = new SimPhotons();
+	Int_t NumPhotons = 2000;
 	Double_t FracNR     = 0.3;
 	Photons->SimulatePhotons(NumPhotons, FracNR);
 	cout << "getting simulated photons" << endl;
@@ -138,5 +141,8 @@ int main () {
 	test->DrawOW(MakeWaveObj);
 	cout << "drawing hists" << endl;
 	MakeWaveObj->DrawHists();
+	// Draw SPE Shape
+	test->DrawShape(R11, "user-defined SPE shape;time, ns;Amplitude, MV");
+
 	cout << "well done" << endl;
 }

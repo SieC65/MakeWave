@@ -83,7 +83,7 @@ void MakeWave::CreateOutWave () {
 
 	// Generate fPhotoElectrons, add them to OutWave and fill the phe number hist
 	for (unsigned int i = 0; i < fPhotonTimes->size(); i++) {
-		NumPhe = fPMT->OnePhoton (&(fPhotonTimes->at(i)), *fPhotoElectrons, true);
+		NumPhe = fPMT->OnePhoton (&(fPhotonTimes->at(i)), *fPhotoElectrons, false);
 		fNumPheHist->Fill(NumPhe);
 	}
 	AddPulseArray (fPhotoElectrons);
@@ -197,9 +197,6 @@ void MakeWave::DrawHists() {
 	c5->cd(2);
 	fDarkTimeHist->Draw();
 	c5->WaitPrimitive();
-
-	// Draw SPE Shape
-	fPMT->DrawShape("user-defined SPE shape;time, ns;Amplitude, MV");
 	
 	// For number of fPhotoElectrons
 	TCanvas *c2 = new TCanvas();

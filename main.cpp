@@ -14,7 +14,6 @@
 #include "PMT_R11410.hh"
 #include "SimPhotons.h"
 #include "MakeTest.h"
-//#include <REDFile/File.hh>
 
 using CLHEP::mV;
 using CLHEP::ns;
@@ -143,6 +142,7 @@ int main () {
 	MakeWaveObj->DrawHists();
 	// Draw SPE Shape
 	test->DrawShape(R11, "user-defined SPE shape;time, ns;Amplitude, MV");
+	MakeWaveObj->SaveOutWave("outw.root");
 
 	cout << "well done" << endl;
 }

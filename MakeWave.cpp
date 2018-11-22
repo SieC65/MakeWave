@@ -227,3 +227,27 @@ void MakeWave::DrawOutWave () {
 	g1->Draw();
 	cout << "OutWave was drawn" << endl;
 }
+
+void MakeWave::SaveOutWave (const char *filename) {
+	RED::OutputFile *outfile = new RED::OutputFile(filename);
+	outfile->Open();
+	if (outfile->IsOpen()) {
+		RED::Event *event = new RED::Event;
+		RED::Waveform *wf = event->GetNewWaveform();
+		event->fNumChannels = event->GetNumWaveforms();
+		event->SetRunInfo(new RED::RunInfo);
+		wf->fChannel = 0;
+		wf->fPeriod  = fPeriod;
+		wf->fGain    = fGain;
+		wf->fNumSamples = fNumSamples;
+		wf->fDelay   = fDelay;
+		wf->fData.assign(fOutWave.begin(), fOutWave.end());
+		wf->Print();
+		outfile->WriteEvent(event);
+		cout << "ready" << endl;
+	}
+	else  {
+		cout << "ERROR. File can't be writed" << endl;
+	}
+	outfile->Close();
+}

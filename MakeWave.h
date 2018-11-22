@@ -4,8 +4,11 @@
 #include <vector>
 
 #include <Rtypes.h>
+#include <TString.h>
 
 #include "PMT_R11410.hh"
+#include <REDFile/File.hh>
+#include <REDEvent/Event.hh>
 
 //using namespace RED;
 using std::vector;
@@ -30,6 +33,7 @@ class MakeWave
 		// OUTPUT
 		void PrintOutWave ();    // Print all values of output signal
 		void DrawOutWave ();     // Draw OutWave
+		void SaveOutWave (const char *filename); // Save OutWave to REDOffline-compatible *.root file
 
 		// GETTERS
 		vector <double> GetOutWave() {return fOutWave;} // Output waveform vector

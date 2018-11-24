@@ -5,6 +5,11 @@
 
 #include "MakeWave.h"
 
+// Class for testing of program
+// It allows to choose manual|random photons times,
+// to average N waveforms from same vectors of photons times
+// and generally to simplify the process of testing different features of program
+
 class MakeTest
 {
 	public:

@@ -78,7 +78,7 @@ int main () {
 	PMT_R11410 *R11 = new PMT_R11410;
 	Double_t QE         = 0.3;      // Quantum Efficiency (full)
 	Double_t Area_mean  = 10*mV*ns; // SPE pulse area
-	Double_t DCR        = 10e6/(1e9*ns);     // Dark count rate
+	Double_t DCR        = 10e3/(1e9*ns);     // Dark count rate
 	Double_t AP_cont    = 0;        // Afterpulsing probability (continuum)
 	R11->SetParams     (QE, Area_mean, DCR, AP_cont);
 	// Interaction parameters
@@ -122,7 +122,7 @@ int main () {
 
 	// Simulate photons
 	SimPhotons *Photons = new SimPhotons();
-	Int_t NumPhotons = 2000;
+	Int_t NumPhotons = 20000;
 	Double_t FracNR     = 0.3;
 	Photons->SimulatePhotons(NumPhotons, FracNR);
 	cout << "getting simulated photons" << endl;

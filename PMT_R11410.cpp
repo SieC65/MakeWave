@@ -129,7 +129,7 @@ namespace RED
 	}
 
 	// Convert photon to pulses. time - time of arr. photon
-	Char_t PMT_R11410::OnePhoton (Double_t* time, PulseArray& electrons, bool fDebug) {
+	Char_t PMT_R11410::OnePhoton (Double_t time, PulseArray& electrons, bool fDebug) {
 		Pulse OnePulse;         // Temporary variable for saving each SPE
 		Double_t RND       = 0; // Random in range 0..1 defining interact. type
 		Double_t TOFe      = 0; // Temporary variable for time delay histogram
@@ -158,7 +158,7 @@ namespace RED
 			NumPhe = -2;
 
 		// Tell to user how many phe were created
-		if (fDebug) cout << "At " << *time/ns << " ns";
+		if (fDebug) cout << "At " << time/ns << " ns";
 		switch ((NumPhe > 0) - (NumPhe < 0)) {
 			case -1:
 				if (fDebug) cout << " photon created " << abs(NumPhe) << " phe in 1dyn" << endl;
@@ -183,7 +183,7 @@ namespace RED
 		for (int i = 0; i < abs(NumPhe); i++) {
 			OnePulse.fAmpl = fRND.Gaus (AmplMean, AmplSigma);
 			TOFe           = fRND.Gaus (TOFeMean, TOFeSigma);
-			OnePulse.fTime = TOFe + *time;
+			OnePulse.fTime = TOFe + time;
 			if (fDebug) cout << " with amplitude = " << OnePulse.fAmpl << " and time =" << OnePulse.fTime/ns << " ns" << endl;
 			electrons.push_back (OnePulse);
 		}

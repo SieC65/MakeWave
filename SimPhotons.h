@@ -18,6 +18,10 @@
 
 #include "MakeWave.h"
 
+// Class for simulate photons caused by nuclear and electron recoils
+// It allows to set a total number of photons and NR fraction of them
+// Then it became possible to get simulated photons times
+
 //using namespace RED;
 using std::vector;
 using CLHEP::ns;

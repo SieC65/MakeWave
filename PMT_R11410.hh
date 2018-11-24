@@ -90,7 +90,7 @@ namespace RED
 			
 			// ACTIONS
 			virtual int  Begin     (PulseArray &electrons) { return(0); }
-			virtual Char_t OnePhoton (Double_t *time, PulseArray &Pulse, bool fDebug = false) = 0; // Convert photons to pulses
+			virtual Char_t OnePhoton (Double_t time, PulseArray &Pulse, bool fDebug = false) = 0; // Convert photons to pulses
 			virtual int  End       (PulseArray &electrons) { return(0); }
 			virtual void Clear     (Option_t *option="") { ; }
 			virtual void GenDCR    (Double_t begintime, Double_t endtime, PulseArray& DarkPulse) { ; } // Generate pulses for dark counts
@@ -161,7 +161,7 @@ namespace RED
 			// ACTIONS
 			int  Begin     (PulseArray &electrons);
 			int  End       (PulseArray &electrons);
-			Char_t OnePhoton (Double_t *time, PulseArray &electrons, bool fDebug=true);
+			Char_t OnePhoton (Double_t time, PulseArray &electrons, bool fDebug=true);
 			void GenDCR    (Double_t begintime, Double_t endtime, PulseArray& electrons);
 			void Clear     (Option_t *option="");
 

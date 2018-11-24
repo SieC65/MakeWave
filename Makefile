@@ -1,4 +1,4 @@
-FLAGS = -Wall -O3 `root-config --cflags --glibs`
+FLAGS = -Wall -O1 `root-config --cflags --glibs`
 
 all: MakeWave
 

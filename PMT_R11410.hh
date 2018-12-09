@@ -67,14 +67,14 @@ namespace RED
 				TSpline *spline;
 			} fShape;
 
-			// SETTERS
+		// SETTERS
 			virtual void SetDefaults() = 0; // Default values for all parameters
 			virtual void SetParams (double QE      , double Area_mean, 
 			                        double DCR = 0., double AP_cont = 0.) = 0; // Main control parameters
 			virtual void SetShape (TF1     *Shape) = 0; // SPE shape in function form
 			virtual void SetShape (TSpline *Shape) = 0; // SPE shape in spline form
 
-			// GETTERS
+		// GETTERS
 			virtual Double_t GetXmax()         const = 0; // Right point of the domain of definition
 			virtual Double_t GetXmin()         const = 0; // Left point of the domain of definition
 			virtual Double_t GetYmax()         const = 0; // Maximum value of SPE Shape
@@ -85,15 +85,15 @@ namespace RED
 			virtual Double_t GetAmpl()         const = 0;
 			virtual Double_t GetAmpl_Sigma()   const = 0;
 
-			// OUTPUT
-			virtual void Print             (Option_t *option="") const { ; } // Print all PMT parameters
-			
-			// ACTIONS
+		// ACTIONS
 			virtual int  Begin     (PulseArray &electrons) { return(0); }
 			virtual Char_t OnePhoton (Double_t time, PulseArray &Pulse, bool fDebug = false) = 0; // Convert photons to pulses
 			virtual int  End       (PulseArray &electrons) { return(0); }
 			virtual void Clear     (Option_t *option="") { ; }
 			virtual void GenDCR    (Double_t begintime, Double_t endtime, PulseArray& DarkPulse) { ; } // Generate pulses for dark counts
+			
+		// OUTPUT
+			virtual void Print             (Option_t *option="") const { ; } // Print all PMT parameters
 
 		private:
 		
@@ -113,7 +113,7 @@ namespace RED
 			~PMT_R11410() {;}
 			virtual TObject* Clone (const char *newname="") const { return 0;}
 			
-			// SETTERS
+		// SETTERS
 			void SetDefaults();
 			void SetParams (double QE = 0.3, double Area_mean = 10*mV*ns, 
 			                double DCR = 0., double AP_cont = 0.); // Main control parameters
@@ -132,7 +132,7 @@ namespace RED
 			void SetTOFe_sigma (Double_t TOFe_sigma = 3*ns   );
 			void SetAP_peak    (Double_t AP_peak    = 0      );
 
-			// GETTERS
+		// GETTERS
 			// Get SPE parameters
 			Double_t GetXmax()        const;
 			Double_t GetXmin()        const;
@@ -158,15 +158,15 @@ namespace RED
 			Double_t GetAP_cont()     const {return fAP_cont;}
 			Double_t GetAP_peak()     const {return fAP_peak;}
 
-			// ACTIONS
+		// ACTIONS
 			int  Begin     (PulseArray &electrons);
 			int  End       (PulseArray &electrons);
 			Char_t OnePhoton (Double_t time, PulseArray &electrons, bool fDebug=true);
 			void GenDCR    (Double_t begintime, Double_t endtime, PulseArray& electrons);
 			void Clear     (Option_t *option="");
 
-			// OUTPUT INFO
-			void Print             (Option_t *option="") const;
+		// OUTPUT
+			void Print (Option_t *option="") const;
 			
 		private:
 		

@@ -16,14 +16,14 @@ class MakeTest
 
 		MakeTest();
 
-		//SETTERS
+	//SETTERS
 		void SetPhotonsTimes (Double_t *TimesArr); // Set vector of photon arrival times
 
-		//GETTERS
+	//GETTERS
 		vector <Double_t> GetMeanOW  () {return *fMeanOutWave;}
 		vector <Double_t> GetTimesVec() {return *fTimesVec;}
 
-		//ACTIONS
+	//ACTIONS
 		void AverageOW (Int_t DebugN, MakeWave* MakeWaveObj); // Create average OutWave for DebugN OutWaves with the same SPE arrival times
 		void DrawOW (MakeWave* MakeWaveObj);
 		void RandPhotonTimes (Int_t number, Double_t leftEdge, Double_t rightEdge); // Set random photon arrival times

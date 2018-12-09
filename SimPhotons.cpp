@@ -15,7 +15,7 @@ SimPhotons::SimPhotons() {
 	fMaxPhotons = 2000;
 	fTauFast    = 7*ns;
 	fTauSlow    = 1600*ns;
-	SetFastFrac(0.22, 0.75);
+	SetFastFrac (0.22, 0.75);
 }
 
 void SimPhotons::SetTau (Double_t TauFast, Double_t TauSlow) {
@@ -45,60 +45,75 @@ void SimPhotons::SetDefFastFract () {
     fFastNR_func -> SetParameter (1, -52.0528);
 }
 
-void SimPhotons::SimPhTimes(Int_t NumPhotons, InterType recoil, TF1* FastProbFunc, TF1* ExpDecay) {
-	cout << "recoil type:" << recoil << endl;
+void SimPhotons::SimulatePhotons(Int_t NumPhotons, Double_t FastFrac) {
+	Int_t NumFast = round (NumPhotons * FastFrac);
+	Int_t NumSlow = NumPhotons * (1 - FastFrac);
+	SimulatePhotons (NumFast, NumSlow);
+}
+
+void SimPhotons::SimulatePhotons(Int_t NumFast, Int_t NumSlow) {
+
+	// Set PDF of fast and slow scintillation decays
+	Double_t XmaxSlow = 3*fTauSlow;
+	fExpDecaySlow = new TF1 ("f_slow","exp(-x/[0])",0,XmaxSlow);
+	fExpDecaySlow -> SetParameter (0, fTauSlow);
+
+	Double_t XmaxFast = 3*fTauFast;
+	fExpDecayFast = new TF1 ("f_fast","exp(-x/[0])",0,XmaxFast);
+	fExpDecayFast -> SetParameter (0, fTauFast);
+
+	// Get random tau for each photon
+	for (Int_t phe = 0; phe < NumFast; phe++){
+		fSimPhotonTimes.push_back(fExpDecayFast->GetRandom(0,XmaxFast));
+	}
+	for (Int_t phe = 0; phe < NumSlow; phe++) {
+		fSimPhotonTimes.push_back(fExpDecaySlow->GetRandom(0,XmaxSlow));
+	}
+}
+
+void SimPhotons::SimulatePhotons (Int_t NumPhotons, Option_t* type) {
+	if (type == std::string("ER"))
+		fInterType = ER;
+	else
+	if (type == std::string("NR"))
+		fInterType = NR;
+	else
+		cout << "Please set \"NR\" or \"ER\" as interaction type" << endl;
+	Int_t NumFast = CalcNumFast (NumPhotons, fInterType);
+	Int_t NumSlow = NumPhotons - NumFast;
+	SimulatePhotons (NumFast, NumSlow);
+}
+
+Int_t SimPhotons::CalcNumFast(Int_t NumPhotons, InterType recoil) {
+
 	// Calculate numbers of fast & slow photons for each group
 	Double_t FastProb = 0;
-	if      ((fFast_type == function) && (recoil == ER)){
-		FastProb = fFastER_func -> Eval(NumPhotons);
-		cout << "ER case, function" << endl;
-	}
-	else if ((fFast_type == function) && (recoil == NR)){
+	if      ((fFast_type == function) && (recoil == NR)){
 		FastProb = fFastNR_func -> Eval(NumPhotons);
 		cout << "NR case, function" << endl;
 	}
-	else if ((fFast_type == constant) && (recoil == ER)){
-		FastProb = fFastER;
-		cout << "ER case, const" << endl;
+	else if ((fFast_type == function) && (recoil == ER)){
+		FastProb = fFastER_func -> Eval(NumPhotons);
+		cout << "ER case, function" << endl;
 	}
 	else if ((fFast_type == constant) && (recoil == NR)){
 		FastProb = fFastNR;
 		cout << "NR case, const" << endl;
 	}
+	else if ((fFast_type == constant) && (recoil == ER)){
+		FastProb = fFastER;
+		cout << "ER case, const" << endl;
+	}
+
+	// Define function for fast Sc fraction
+	TF1* FastProbFunc = new TF1 ("pdf for fast fraction","ROOT::Math::binomial_pdf(x,[0],[1])",0,NumPhotons+1);
 	FastProbFunc -> SetRange (0, NumPhotons+1);
 	FastProbFunc -> SetParameter (0, FastProb);
 	FastProbFunc -> SetParameter (1, NumPhotons);
-	cout << recoil << ": fast fraction = " << FastProb << endl;
-	Int_t NumFast = FastProbFunc -> GetRandom (0, NumPhotons+1);
-	Int_t NumSlow = NumPhotons - NumFast;
-	
-	// Simulate their flashing times
-	ExpDecay -> SetRange (0, 500*ns);
-	ExpDecay -> SetParameter (0, fTauFast);
-	for (Int_t phe = 0; phe < NumFast; phe++){
-		fSimPhotonTimes.push_back(ExpDecay->GetRandom(0,500*ns));
-	}
-	ExpDecay -> SetRange (0, 50000*ns);
-	ExpDecay -> SetParameter (0, fTauSlow);
-	for (Int_t phe = 0; phe < NumSlow; phe++) {
-		fSimPhotonTimes.push_back(ExpDecay->GetRandom(0,50000*ns));
-	}
-}
 
-void SimPhotons::SimulatePhotons(Int_t NumPhotons, Double_t FracNR) {
-	cout << "Start simulating photons" << endl;
-	
-	// First, divide photons to NR and ER groups
-	Int_t NumPhotonsNR = round (NumPhotons *FracNR); // Number of photons from NR
-	Int_t NumPhotonsER = NumPhotons - NumPhotonsNR;  // Number of photons from ER
-	cout << "There are " << NumPhotonsER << " photons from ER and " << NumPhotonsNR << " photons from NR" << endl;
-	
-	// Define functions for fast Sc fraction and for exp decay scintillation light
-	TF1* FastProbFunc = new TF1 ("pdf for fast Sc","ROOT::Math::binomial_pdf(x,[0],[1])",0,NumPhotons+1);
-	TF1 *ExpDecay     = new TF1 ("f_fast","exp(-x/[0])",0,50000*ns); // pdf of the decay
-	
-	// Simulate photons times for ER and NR
-	cout << "ER=" << ER << " and NR=" << NR << endl;
-	SimPhTimes(NumPhotonsER, ER, FastProbFunc, ExpDecay);
-	SimPhTimes(NumPhotonsNR, NR, FastProbFunc, ExpDecay);
+	// Simulate number of fast photons
+	Int_t NumFast = round (FastProbFunc -> GetRandom (0, NumPhotons+1));
+	Int_t NumSlow = NumPhotons - NumFast;
+
+	return NumFast;
 }

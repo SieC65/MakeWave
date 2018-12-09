@@ -18,11 +18,19 @@
 
 #include "MakeWave.h"
 
-// Class for simulate photons caused by nuclear and electron recoils
-// It allows to set a total number of photons and NR fraction of them
-// Then it became possible to get simulated photons times
+///////////////////////////////////////////////////////////////////////////////////////
+//                                                                                   //
+// Class for simulate time moments of flashing photons due to 1 interaction event.   //
+//                                                                                   //
+// User should set parameters of scintillation caused by interaction                 //
+// either as two numbers of photons corresponding to fast & slow scintillation       //
+// or as a total number of emitted photons + type of interaction ("ER" | "NR").      //
+//                                                                                   //
+// After setting parameters of scintillation and interaction                         //
+// user can get vector of photons times, where interaction happened at "0" point.    //
+//                                                                                   //
+///////////////////////////////////////////////////////////////////////////////////////
 
-//using namespace RED;
 using std::vector;
 using CLHEP::ns;
 
@@ -32,27 +40,31 @@ class SimPhotons
 	
 		SimPhotons ();
 		
-		// SETTERS
-		void SetTau (Double_t TauFast, Double_t TauSlow); // Set tau for fast & slow Sc exp decay functions
-		void SetFastFrac (TF1* FastER_func, TF1* FastNR_func);  // Set functions of fast Sc fractions depend on photons number for ER and NR
-		void SetFastFrac (Double_t FastER, Double_t FastNR); // Set constant fast Sc fractions
-		void SetDefFastFract (); // Set default values for fast fraction functions
+	// SETTERS
+		void SetTau (Double_t TauFast, Double_t TauSlow); // Set tau for fast & slow scintillation exp(-t/tau) functions
+
+		// Set fast fractions of scintillation for ER and NR processes
+		void SetFastFrac (TF1* FastER_func, TF1* FastNR_func);  // as functions depend on photons number
+		void SetFastFrac (Double_t FastER, Double_t FastNR);    // as constants
+		void SetDefFastFract (); // Set fast fractions as (A + B / NumPhotons) with default A,B for ER & NR
 		
-		// GETTERS
-		vector <double> GetSimPhotonTimes() {return fSimPhotonTimes;}
+	// GETTERS
+		vector <double> GetSimPhotonTimes() {return fSimPhotonTimes;} // return vector of photons times
 		
-		// ACTIONS
-		void SimulatePhotons(Int_t NumPhotons, Double_t FracNR);
+	// ACTIONS
+		// Simulate flashing times
+		void SimulatePhotons (Int_t NumPhotons, Double_t FastFrac);
+		void SimulatePhotons (Int_t NumFast, Int_t NumSlow);
+		void SimulatePhotons (Int_t NumPhotons, Option_t* type);
 
 	private:
 	
-		// Auxiliary
-		
+		// Auxiliary		
 		enum func_type {constant, function} fFast_type; // Show if fast Sc fraction depends on photons number
 		enum InterType {ER, NR} fInterType; // Interaction type
 		Int_t fMinPhotons;  // Minimum photons number for default function of fast Sc fraction
 		Int_t fMaxPhotons;  // Maximum photons number (right edge of function)
-		void SimPhTimes(Int_t NumPhotons, InterType recoil, TF1* FastProbFunc, TF1* ExpDecay);
+		Int_t CalcNumFast(Int_t NumPhotons, InterType recoil);
 		
 		// Physics
 		Double_t fTauFast;  // Tau for fast scintillation pdf
@@ -61,6 +73,8 @@ class SimPhotons
 		Double_t fFastNR;   // The same for NR
 		TF1* fFastER_func;  // Fraction of fast component for Sc from ER depends on photons number
 		TF1* fFastNR_func;  // The same for NR
+		TF1* fExpDecaySlow; // decay PDF of slow Sc component
+		TF1* fExpDecayFast; // decay PDF of fast Sc componentl
 		
 		// Output
 		vector <double> fSimPhotonTimes; // Output vector of photons arrival times

@@ -18,28 +18,28 @@ class MakeWave
 
 		MakeWave ();
 
-		// SETTERS
+	// SETTERS
 		void SetPMT (RED::PMT* pmt); // Set PMT object
 		void SetOutWave (Double_t Period, Double_t Gain, Int_t NumSamples, Double_t Delay); // Set OutWave parameters
 		void SetDefaults (); // Set default OutWave parameters
 		void SetPhotonTimes (vector <double> *PhotonTimes); // Set vector of photon arrival times
 		
-		// ACTIONS
-		void CreateOutWave ();   // Create OutWave
-
-		// OUTPUT
-		void PrintOutWave ();    // Print OutWave (all times & amplitudes)
-		void DrawHists ();       // Draw some histograms
-		void DrawOutWave ();     // Draw OutWave
-		void SaveOutWave (const char *filename); // Save OutWave to REDOffline-compatible *.root file
-
-		// GETTERS
+	// GETTERS
 		vector <double> GetOutWave () {return fOutWave;} // Output waveform vector
 		// OutWave parameters
 		Double_t GetPeriod ()         {return fPeriod;}      // Time between samples of OutWave
 		Double_t GetGain ()           {return fGain;}        // ADC resolution
 		Double_t GetNumSamples ()     {return fNumSamples;}  // Number of samples in OutWave
 		Double_t GetDelay ()          {return fDelay;}       // Delay from "0" of abs.time (related to photons times) to the left edge of OutWave
+		
+	// ACTIONS
+		void CreateOutWave ();   // Create OutWave
+
+	// OUTPUT
+		void PrintOutWave ();    // Print OutWave (all times & amplitudes)
+		void DrawHists ();       // Draw some histograms
+		void DrawOutWave ();     // Draw OutWave
+		void SaveOutWave (const char *filename); // Save OutWave to REDOffline-compatible *.root file
 
 	private:
 		

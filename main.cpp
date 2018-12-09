@@ -123,8 +123,7 @@ int main () {
 	// Simulate photons
 	SimPhotons *Photons = new SimPhotons();
 	Int_t NumPhotons = 20000;
-	Double_t FracNR     = 0.3;
-	Photons->SimulatePhotons(NumPhotons, FracNR);
+	Photons->SimulatePhotons(NumPhotons, "ER");
 	cout << "getting simulated photons" << endl;
 	vector <Double_t> SimPhotonTimes = Photons->GetSimPhotonTimes();
 

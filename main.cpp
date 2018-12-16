@@ -128,10 +128,10 @@ int main () {
 	vector <Double_t> SimPhotonTimes;
 	OutputFile *outfile;
 
-	TH2F *h_fracER = new TH2F("fracER","",4001,0,4000,101,0,1.01);
+	TH2F *h_fracER = new TH2F("fracER","",2001,0,2000,101,0,1.01);
 	h_fracER->SetMarkerStyle(7);
 	h_fracER->SetMarkerColor(4);
-	TH2F *h_fracNR = new TH2F("fracNR","",4001,0,4000,101,0,1.01);
+	TH2F *h_fracNR = new TH2F("fracNR","",2001,0,2000,101,0,1.01);
 	h_fracNR->SetMarkerStyle(7);
 	h_fracNR->SetMarkerColor(2);
 	Double_t FracTime = 90*ns;
@@ -168,12 +168,10 @@ int main () {
 	TCanvas *c = new TCanvas("c1","",800,600);
 	h_fracER->Draw();
 	h_fracNR->Draw("SAME");
-	h_fracER->SetXTitle("Количество фотоэлектронов");
-	h_fracER->SetYTitle("Параметр F90");
+	h_fracER->SetXTitle("Photoelectrons number");
+	h_fracER->SetYTitle("F90");
 	gStyle->SetOptStat(1);
 	c->SaveAs("saved.root");
-	c->SaveAs("saved.xml");
-	c->SaveAs("saved.cc");
 	c->WaitPrimitive();
 	c->WaitPrimitive();
 	c->WaitPrimitive();

@@ -53,9 +53,9 @@ class SimPhotons
 		
 	// ACTIONS
 		// Simulate flashing times
-		void SimulatePhotons (Int_t NumPhotons, Double_t FastFrac);
-		void SimulatePhotons (Int_t NumFast, Int_t NumSlow);
-		void SimulatePhotons (Int_t NumPhotons, Option_t* type);
+		vector <double> SimulatePhotons (Int_t NumPhotons, Double_t FastFrac);
+		vector <double> SimulatePhotons (Int_t NumFast, Int_t NumSlow);
+		vector <double> SimulatePhotons (Int_t NumPhotons, Option_t* type);
 
 	private:
 	
@@ -64,7 +64,6 @@ class SimPhotons
 		enum InterType {ER, NR} fInterType; // Interaction type
 		Int_t fMinPhotons;  // Minimum photons number for default function of fast Sc fraction
 		Int_t fMaxPhotons;  // Maximum photons number (right edge of function)
-		Int_t CalcNumFast(Int_t NumPhotons, InterType recoil);
 		
 		// Physics
 		Double_t fTauFast;  // Tau for fast scintillation pdf
@@ -74,7 +73,8 @@ class SimPhotons
 		TF1* fFastER_func;  // Fraction of fast component for Sc from ER depends on photons number
 		TF1* fFastNR_func;  // The same for NR
 		TF1* fExpDecaySlow; // decay PDF of slow Sc component
-		TF1* fExpDecayFast; // decay PDF of fast Sc componentl
+		TF1* fExpDecayFast; // decay PDF of fast Sc component
+		TF1* fFastProbFunc; // binomial PDF for fast fraction
 		
 		// Output
 		vector <double> fSimPhotonTimes; // Output vector of photons arrival times

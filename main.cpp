@@ -9,6 +9,11 @@
 #include <TRandom3.h>
 #include <TF1.h>
 #include <TSpline.h>
+#include <TH2F.h>
+#include <TStyle.h>
+
+#include <REDFile/File.hh>
+#include <REDEvent/Event.hh>
 
 #include "MakeWave.h"
 #include "PMT_R11410.hh"
@@ -21,8 +26,6 @@ using namespace std;
 using namespace RED;
 
 int main () {
-	cout << "Program start" << endl;
-	new TApplication("Canvas", 0, 0);
 	
 // SET SPE SHAPE
 
@@ -78,7 +81,7 @@ int main () {
 	PMT_R11410 *R11 = new PMT_R11410;
 	Double_t QE         = 0.3;      // Quantum Efficiency (full)
 	Double_t Area_mean  = 10*mV*ns; // SPE pulse area
-	Double_t DCR        = 10e3/(1e9*ns);     // Dark count rate
+	Double_t DCR        = 10e0/(1e9*ns);     // Dark count rate
 	Double_t AP_cont    = 0;        // Afterpulsing probability (continuum)
 	R11->SetParams     (QE, Area_mean, DCR, AP_cont);
 	// Interaction parameters
@@ -105,9 +108,9 @@ int main () {
 			break;
 	}
 	R11->CalculateParams();
-	R11->Print("user-defined");
-	R11->Print("calculated");
-	R11->Print("probabilities");
+	//R11->Print("user-defined");
+	//R11->Print("calculated");
+	//R11->Print("probabilities");
 
 // CREATE OUTWAVE
 	
@@ -120,28 +123,61 @@ int main () {
 	Double_t Delay      = -150000*ns;
 	MakeWaveObj->SetOutWave (Period, Gain, NumSamples, Delay); // Set OutWave parameters
 
-	// Simulate photons
 	SimPhotons *Photons = new SimPhotons();
-	Int_t NumPhotons = 20000;
-	Photons->SimulatePhotons(NumPhotons, "ER");
-	cout << "getting simulated photons" << endl;
-	vector <Double_t> SimPhotonTimes = Photons->GetSimPhotonTimes();
+	Photons->SetDefFastFract();
+	vector <Double_t> SimPhotonTimes;
+	OutputFile *outfile;
 
-	cout << "setting simulated photons" << endl;
-	MakeWaveObj->SetPhotonTimes (&SimPhotonTimes);  // Set photons arrival times vector
+	TH2F *h_fracER = new TH2F("fracER","",4001,0,4000,101,0,1.01);
+	h_fracER->SetMarkerStyle(7);
+	h_fracER->SetMarkerColor(4);
+	TH2F *h_fracNR = new TH2F("fracNR","",4001,0,4000,101,0,1.01);
+	h_fracNR->SetMarkerStyle(7);
+	h_fracNR->SetMarkerColor(2);
+	Double_t FracTime = 90*ns;
+	Double_t Frac = 0;
 
-	// Processing OutWave with help of MakeTest class
-	cout << "processing average" << endl;
-	MakeTest *test = new MakeTest();
-	Int_t DebugNum  = 1; // Number of OutWaves for averaging
-	test->AverageOW (DebugNum, MakeWaveObj);
-	cout << "drawing OW" << endl;
-	test->DrawOW(MakeWaveObj);
-	cout << "drawing hists" << endl;
-	MakeWaveObj->DrawHists();
-	// Draw SPE Shape
-	test->DrawShape(R11, "user-defined SPE shape;time, ns;Amplitude, MV");
-	MakeWaveObj->SaveOutWave("outw.root");
+	outfile = MakeWaveObj->GetNewFile("ER.root");
+	for (Int_t NumPhotons = 100; NumPhotons < 4000; NumPhotons += 1) {
+		cout << "ER " << NumPhotons << " photons" << endl;
+		SimPhotonTimes = Photons->SimulatePhotons(NumPhotons, "ER");
+		MakeWaveObj->SetPhotonTimes (&SimPhotonTimes);
+		MakeWaveObj->CreateOutWave();
+		//MakeWaveObj->AddToFile();
+		Frac = MakeWaveObj->GetFrac(FracTime);
+		if (Frac)
+			h_fracER->Fill(MakeWaveObj->GetNumPE(), Frac);
+	}
+	MakeWaveObj->CloseFile();
 
+	outfile = MakeWaveObj->GetNewFile("NR.root");
+	for (Int_t NumPhotons = 100; NumPhotons < 4000; NumPhotons += 1) {
+		cout << "NR " << NumPhotons << " photons" << endl;
+		SimPhotonTimes = Photons->SimulatePhotons(NumPhotons, "NR");
+		MakeWaveObj->SetPhotonTimes (&SimPhotonTimes);
+		MakeWaveObj->CreateOutWave();
+		//MakeWaveObj->AddToFile();
+		Frac = MakeWaveObj->GetFrac(FracTime);
+		if (Frac)
+			h_fracNR->Fill(MakeWaveObj->GetNumPE(), Frac);
+	}
+	MakeWaveObj->CloseFile();
+
+	TApplication *app = new TApplication("canvas",0,0);
+	
+	TCanvas *c = new TCanvas("c1","",800,600);
+	h_fracER->Draw();
+	h_fracNR->Draw("SAME");
+	h_fracER->SetXTitle("Количество фотоэлектронов");
+	h_fracER->SetYTitle("Параметр F90");
+	gStyle->SetOptStat(1);
+	c->SaveAs("saved.root");
+	c->SaveAs("saved.xml");
+	c->SaveAs("saved.cc");
+	c->WaitPrimitive();
+	c->WaitPrimitive();
+	c->WaitPrimitive();
+	c->WaitPrimitive();
+	
 	cout << "well done" << endl;
 }

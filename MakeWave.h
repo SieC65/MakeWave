@@ -5,6 +5,9 @@
 
 #include <Rtypes.h>
 
+#include <REDFile/File.hh>
+#include <REDEvent/Event.hh>
+
 #include "PMT_R11410.hh"
 
 // Class that corresponds to electronic read-out from PMT
@@ -31,9 +34,17 @@ class MakeWave
 		Double_t GetGain ()           {return fGain;}        // ADC resolution
 		Double_t GetNumSamples ()     {return fNumSamples;}  // Number of samples in OutWave
 		Double_t GetDelay ()          {return fDelay;}       // Delay from "0" of abs.time (related to photons times) to the left edge of OutWave
+		Double_t GetFrac (Double_t FracWindow, Double_t TotalWindow = 0); // Fraction of light in the first FracWindow of pulse (for example, f90)
+		                                                                   // If needed, total pulse width can be limited by TotalWindow (leave zero otherwise)
+		Int_t GetNumPE ()             {return fPhotoElectrons->size();}
+
+		RED::OutputFile* GetNewFile (const char *filename); // Create new REDFile
+		RED::OutputFile* GetCurrentFile () {return fOutFile;} // Return pointer to existing file
 		
 	// ACTIONS
 		void CreateOutWave ();   // Create OutWave
+		void CloseFile(); // Close REDFile
+		void AddToFile(); // Add current fOutWave to new event in REDFile
 
 	// OUTPUT
 		void PrintOutWave ();    // Print OutWave (all times & amplitudes)
@@ -63,12 +74,14 @@ class MakeWave
 		vector <double> *fPhotonTimes; // Photons arrival times
 
 		// Histograms
-		TH1F* fDarkTimeHist;  // Time of dark pulses
-		TH1F* fDarkAmplHist;  // Amplitude of dark pulses
-		TH1F* fNumPheHist;    // Number of photoelectron created by 1 photon:
-							  // -1 or -2: 1 or 2 phe in 1dyn
-							  // +1 or +2: 1 or 2 phe in PC
 		TH1F* fPulseAreaHist; // Area under pulse SPE (DPE)
+
+		//File
+		RED::OutputFile *fOutFile;
+		RED::Event *fEvent;
+		RED::Waveform *fWaveform;
+		RED::RunInfo *fRunInfo;
+		Int_t fNumEv;
 };
 
 #endif // MakeWave_H

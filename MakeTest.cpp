@@ -15,7 +15,6 @@ using CLHEP::ns;
 MakeTest::MakeTest() {
 	fTimesVec = new vector <Double_t>;
 	fMeanOutWave = new vector <Double_t>;
-	cout << "MakeTest object created" << endl;
 }
 
 void MakeTest::SetPhotonsTimes (Double_t *TimesArr) {
@@ -36,12 +35,11 @@ void MakeTest::AverageOW (Int_t DebugN, MakeWave* MakeWaveObj) {
 	cout << "Create vector for mean waveform" << endl;
 	fMeanOutWave->resize (NumSamples);
 	Bool_t ShowAllNum = false; // Report status of each OutWave performing
-	                           // If false - only 10 steps will be showed
+	                           // If false - only each 10th step will be showed
 	// Create OutWave
 	if (DebugN < 100) {
 		ShowAllNum = true;
 	}
-	cout << "Get into cycle" << endl;
 	for (int i = 1; i <= DebugN; i++){
 		if (ShowAllNum)
 			cout << "Creating " << i << " waveform" << endl;

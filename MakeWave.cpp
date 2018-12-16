@@ -6,8 +6,6 @@
 #include "SystemOfUnits.h"
 
 #include "MakeWave.h"
-#include <REDFile/File.hh>
-#include <REDEvent/Event.hh>
 
 using std::cout;
 using std::endl;
@@ -18,10 +16,8 @@ MakeWave::MakeWave () {
 	fPhotoElectrons   = 0;
 	fDarkElectrons    = 0;
 	fPMT              = 0;
-	fDarkTimeHist     = 0;
-	fDarkAmplHist     = 0;
-	fNumPheHist       = 0;
 	fPulseAreaHist    = 0;
+	fOutFile          = 0;
 }
 
 // Set PMT
@@ -50,32 +46,60 @@ void MakeWave::SetPhotonTimes (vector <double>* PhotonTimes) {
 	fPhotonTimes = PhotonTimes;
 }
 
+Double_t MakeWave::GetFrac (Double_t FracWindow, Double_t TotalWindow) {
+
+	if (fPhotoElectrons->size()) {
+		// Find min of delays
+		Double_t minDelay = (fPhotoElectrons->at(0)).fTime;
+		for (unsigned int i = 0; i < fPhotoElectrons->size(); i++) {
+			if (minDelay > (fPhotoElectrons->at(i)).fTime)
+				minDelay = (fPhotoElectrons->at(i)).fTime;
+		}
+		// Calculate integrals in both windows
+		Double_t TotalSum = 0;
+		Double_t FracSum = 0;
+		if (!TotalWindow) {		
+			for (unsigned int i = 0; i < fPhotoElectrons->size(); i++) {
+				TotalSum += (fPhotoElectrons->at(i)).fAmpl;
+				if ((fPhotoElectrons->at(i)).fTime - minDelay < FracWindow)
+					FracSum += (fPhotoElectrons->at(i)).fAmpl;
+			}
+		}
+		else {
+			for (unsigned int i = 0; i < fPhotoElectrons->size(); i++) {
+				if ((fPhotoElectrons->at(i)).fTime - minDelay < TotalWindow) {
+					TotalSum += (fPhotoElectrons->at(i)).fAmpl;
+					if ((fPhotoElectrons->at(i)).fTime - minDelay < FracWindow)
+						FracSum += (fPhotoElectrons->at(i)).fAmpl;
+				}
+			}
+		}
+		Double_t frac = FracSum / TotalSum;
+		return frac;
+	}
+	else
+		return 0;
+}
+
 // Creating OutWave
 void MakeWave::CreateOutWave () {
 	fOutWave.clear ();                //  Clear vector OutWave
 	fOutWave.resize (fNumSamples, 0); // Resize vector OutWave
-	Char_t NumPhe = 0;
 
-// ADD SPE FROM PHOTONS
+	// ADD SPE FROM PHOTONS
 
 	// Check if PulseArray vector fPhotoElectrons exists
 	if (!fPhotoElectrons)
 		fPhotoElectrons = new RED::PMT::PulseArray;
 	else fPhotoElectrons->clear();
 
-	// Histogram for number of photons created 0, 1 and 2 phe
-	// -2: 2phe from 1d; -1: 1phe from 1d; 0: no interaction
-	// +1: 1phe from PC; +2: 2phe from PC
-	fNumPheHist   = new TH1F ("fNumPheHist","NumberOfPhe",5,-2.5,2.5);
-
-	// Generate fPhotoElectrons, add them to OutWave and fill the phe number hist
+	// Generate fPhotoElectrons, add them to OutWave
 	for (unsigned int i = 0; i < fPhotonTimes->size(); i++) {
-		NumPhe = fPMT->OnePhoton (fPhotonTimes->at(i), *fPhotoElectrons, false);
-		fNumPheHist->Fill(NumPhe);
+		fPMT->OnePhoton (fPhotonTimes->at(i), *fPhotoElectrons, false);
 	}
 	AddPulseArray (fPhotoElectrons);
 
-// ADD DARK COUNTS
+	// ADD DARK COUNTS
 
 	// Check if PulseArray vector fDarkElectrons exists
 	if (!fDarkElectrons)
@@ -100,27 +124,6 @@ void MakeWave::PrintOutWave() {
 // Draw histograms
 void MakeWave::DrawHists() {
 
-	// CREATE HISTOGRAMS
-
-	// For fPhotoElectrons
-	// if (!TimeHist) {
-	// 	Double_t LowTime  = 0; // Lower bound of time delay for histogram;
-	// 	Double_t HighTime = fPMT->GetTOFe() + 3 * fPMT->GetTOFe_Sigma(); // Upper bound of time delay for histogram;
-	// 	TimeHist = new TH1F ("TimeHist", "Time delay from photon hit to pulse", 100, LowTime, HighTime);
-	// }
-	// if (!AmplHist) {
-	// 	Double_t LowAmpl  = 0; //GetAmpl() - 3 * GetAmpl_Sigma(); // Lower bound of amplitude for histogram;
-	// 	Double_t HighAmpl = fPMT->GetAmpl() + 3 * fPMT->GetAmpl_Sigma(); // Upper bound of amplitude for histogram;
-	// 	AmplHist = new TH1F ("AmplHist", "Amplitude of pulse", 100, LowAmpl, HighAmpl);
-	// }
-	// TCanvas *c4 = new TCanvas();
-	// c4->SetTitle("Distribution of amplitude and time for Photon Pulses");
-	// c4->Divide(2,1);
-	// c4->cd(1);
-	// R11->AmplHist->Draw();
-	// c4->cd(2);
-	// R11->TimeHist->Draw();
-
 	// For pulse area
 	if (!fPulseAreaHist) {
 		Double_t Low_Area  = 0;
@@ -136,39 +139,6 @@ void MakeWave::DrawHists() {
 	c3->cd();
 	c3->SetLogy();
 	fPulseAreaHist->Draw();
-
-	// For dark electrons
-	if (!fDarkTimeHist) {
-		Double_t LowDarkTime  = fDelay;
-		Double_t HighDarkTime = fDelay + fPeriod*fNumSamples;
-		fDarkTimeHist = new TH1F ("fDarkTimeHist", "Abs time of dark pulse", 100, LowDarkTime, HighDarkTime);
-	}
-	if (!fDarkAmplHist) {
-		Double_t LowDarkAmpl  = fPMT->GetAmpl() - 3 * fPMT->GetAmpl_Sigma();
-		Double_t HighDarkAmpl = fPMT->GetAmpl() + 3 * fPMT->GetAmpl_Sigma();
-		fDarkAmplHist = new TH1F ("fDarkAmplHist", "Amplitude of dark pulse", 100, LowDarkAmpl, HighDarkAmpl);
-	}
-	for (unsigned int i =0; i< fDarkElectrons->size(); i++) {
-		RED::PMT::Pulse DarkPulse = (*fDarkElectrons).at(i);
-		fDarkTimeHist->Fill (DarkPulse.fTime);
-		fDarkAmplHist->Fill (DarkPulse.fAmpl);
-	}
-	TCanvas *c5 = new TCanvas();
-	c5->SetTitle("Distribution of amplitude and time for Dark Pulses");
-	c5->Divide(2,1);
-	c5->cd(1);
-	fDarkAmplHist->Draw();
-	c5->cd(2);
-	fDarkTimeHist->Draw();
-	c5->WaitPrimitive();
-	
-	// For number of fPhotoElectrons
-	TCanvas *c2 = new TCanvas();
-	c2->SetTitle("Number of phe");
-	c2->cd();
-	c2->SetLogy();
-	fNumPheHist->Draw();
-	fNumPheHist->SetTitle("Number of phe resulted (-1 or -2 == 1 or 2 phe from 1st dynode);N(phe);Events");
 }
 
 // Draw OutWave
@@ -183,28 +153,59 @@ void MakeWave::DrawOutWave () {
 	g1->Draw();
 }
 
-void MakeWave::SaveOutWave (const char *filename) {
-	RED::OutputFile *outfile = new RED::OutputFile(filename);
-	outfile->Open();
-	if (outfile->IsOpen()) {
-		RED::Event *event = new RED::Event;
-		RED::Waveform *wf = event->GetNewWaveform();
-		event->fNumChannels = event->GetNumWaveforms();
-		event->SetRunInfo(new RED::RunInfo);
-		wf->fChannel = 0;
-		wf->fPeriod  = fPeriod;
-		wf->fGain    = fGain;
-		wf->fNumSamples = fNumSamples;
-		wf->fDelay   = fDelay;
-		wf->fData.assign(fOutWave.begin(), fOutWave.end());
-		wf->Print();
-		outfile->WriteEvent(event);
-		cout << "ready" << endl;
+void MakeWave::AddToFile () {
+	if (fOutFile) {
+		if (fOutFile->IsOpen()) {
+			fWaveform->fData.assign(fOutWave.begin(), fOutWave.end());
+			fOutFile->WriteEvent(fEvent);
+			fNumEv++;
+		}
+		else  {
+			cout << "ERROR. File can't be written" << endl;
+		}
+	}
+	else {
+		cout << "ERROR. File was not created" << endl;
+	}
+}
+
+RED::OutputFile* MakeWave::GetNewFile(const char *filename) {
+	if (fOutFile) {
+		if (fOutFile->IsOpen()) {
+			fOutFile->Close();
+		}
+	}
+	fOutFile = new RED::OutputFile(filename);
+	fOutFile->Open();
+	if (fOutFile->IsOpen()){
+		fEvent = new RED::Event;
+		fRunInfo = new RED::RunInfo;
+		fEvent->SetRunInfo (fRunInfo);
+		fWaveform = fEvent->GetNewWaveform();
+		fWaveform->fChannel = 0;
+		fWaveform->fPeriod  = fPeriod;
+		fWaveform->fGain    = fGain;
+		fWaveform->fNumSamples = fNumSamples;
+		fWaveform->fDelay   = fDelay;
+		fEvent->fNumChannels = fEvent->GetNumWaveforms();;
+		fNumEv = 0;
+		return fOutFile;
 	}
 	else  {
-		cout << "ERROR. File can't be writed" << endl;
+		cout << "ERROR. File " << filename << " can't be written" << endl;
+		return 0;
 	}
-	outfile->Close();
+}
+
+void MakeWave::CloseFile() {
+	if (fOutFile) {
+		if (fOutFile->IsOpen()) {
+			RED::RunInfo *info = new RED::RunInfo();
+			info->fDAQ_ID="CENNS10";
+			fOutFile->AddRunInfo(info);
+			fOutFile->Close();
+		}
+	}
 }
 
 // Add PulseArray vector to OutWave
@@ -215,15 +216,15 @@ void MakeWave::AddPulseArray (RED::PMT::PulseArray *Pulses) {
 	Int_t StartSample     = 0; // First sample in SPE domain
 	Int_t FinishSample    = 0; // Last sample in SPE domain
 	
-	// Go along all pulses in PulseArray vector DarkPulse and add them to OutWave
+	// Go along all pulses and add them to OutWave
 	for (unsigned int i = 0; i < Pulses->size(); i++) {
 		// Get delay time from "0" of OutWave to "0" of SPE shape
-		PulseTime    = ((*Pulses)[i]).fTime - fDelay;
+		PulseTime    = (Pulses->at(i)).fTime - fDelay;
 		// Calculate left and right samples including SPE
 		StartSample  =  ceil( (PulseTime + fPMT->GetXmin()) / fPeriod );
 		FinishSample = floor( (PulseTime + fPMT->GetXmax()) / fPeriod );
 		// Get amplitude of SPE shape
-		PulseAmpl    = ((*Pulses)[i]).fAmpl;
+		PulseAmpl    = (Pulses->at(i)).fAmpl;
 		// Limit edges
 		if (StartSample < 0)
 			StartSample = 0;

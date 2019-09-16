@@ -4,16 +4,25 @@
 #include <vector>
 
 #include <Rtypes.h>
+#include "SystemOfUnits.h"
 
 #include <REDFile/File.hh>
 #include <REDEvent/Event.hh>
 
 #include "PMT_R11410.hh"
 
-// Class that corresponds to electronic read-out from PMT
-// It allows to create output waveform from vector of photon times
+/////////////////////////////////////////////////////////////////////////////
+//                                                                         //
+// Class for generate output waveform from vector of photon times          //
+// It allows to create REDFile compatible to REDOffline                    //
+// Also it has tools for calculating F90 parameter (without dark current)  //
+// Class that corresponds to electronic read-out from PMT                  //
+// It allows to create output waveform from vector of photon times         //
+//                                                                         //
+/////////////////////////////////////////////////////////////////////////////
 
 using std::vector;
+using CLHEP::ns;
 
 class MakeWave
 {
@@ -29,28 +38,31 @@ class MakeWave
 		
 	// GETTERS
 		vector <double> GetOutWave () {return fOutWave;} // Output waveform vector
-		// OutWave parameters
+		// Get outWave parameters
 		Double_t GetPeriod ()         {return fPeriod;}      // Time between samples of OutWave
 		Double_t GetGain ()           {return fGain;}        // ADC resolution
 		Double_t GetNumSamples ()     {return fNumSamples;}  // Number of samples in OutWave
 		Double_t GetDelay ()          {return fDelay;}       // Delay from "0" of abs.time (related to photons times) to the left edge of OutWave
-		Double_t GetFrac (Double_t FracWindow, Double_t TotalWindow = 0); // Fraction of light in the first FracWindow of pulse (for example, f90)
-		                                                                   // If needed, total pulse width can be limited by TotalWindow (leave zero otherwise)
-		Int_t GetNumPE ()             {return fPhotoElectrons->size();}
 
-		RED::OutputFile* GetNewFile (const char *filename); // Create new REDFile
+		// Tools for calculate F90
+		Double_t GetFrac (Double_t FracWindow = 90*ns, Double_t TotalWindow = 0); // Fraction of light in the first FracWindow of pulse (default 90*ns)
+		                                                                          // If needed, total pulse width can be limited by TotalWindow (leave 0 otherwise)
+		Int_t GetNumPE () {return fPhotoElectrons->size();} // Get number of photoelectrons emitted last run
+
+		// REDFile activities
 		RED::OutputFile* GetCurrentFile () {return fOutFile;} // Return pointer to existing file
 		
 	// ACTIONS
 		void CreateOutWave ();   // Create OutWave
-		void CloseFile(); // Close REDFile
+		RED::OutputFile* GetNewFile (const char *filename); // Create new REDFile
 		void AddToFile(); // Add current fOutWave to new event in REDFile
+		void CloseFile(); // Close REDFile
 
 	// OUTPUT
 		void PrintOutWave ();    // Print OutWave (all times & amplitudes)
 		void DrawHists ();       // Draw some histograms
 		void DrawOutWave ();     // Draw OutWave
-		void SaveOutWave (const char *filename); // Save OutWave to REDOffline-compatible *.root file
+		void SaveOutWave (const char *filename = "OW.root", const char *title = "OutWave"); // Save OutWave to file
 
 	private:
 		

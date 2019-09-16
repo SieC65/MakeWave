@@ -14,6 +14,9 @@ namespace RED
 	PMT_R11410::PMT_R11410() {
 		fRND.SetSeed(0);
 		fShape.func   = 0;
+		fSPEAreaPdf = new TF1 ("pdf for SPE Area","ROOT::Math::gaussian_pdf(x,[0],[1])",0*ns,500*mV*ns);
+		fSPEAreaPdf->SetParameter(0,1*mV*ns);
+		fSPEAreaPdf->SetParameter(1,20*mV*ns);
 		//cout << "PMT_R11410 object was created" << endl;
 	}
 
@@ -115,6 +118,7 @@ namespace RED
 		for (int i=0; i<nbins; i++) {
 			Integral += BinWidth * spline->Eval(xmin + (i+0.5)*BinWidth);
 		}
+		cout << "return integral" << endl;
 		return Integral;
 	}
 
@@ -181,7 +185,8 @@ namespace RED
 
 		// Simulate time & ampl of spe , fill hists
 		for (int i = 0; i < abs(NumPhe); i++) {
-			OnePulse.fAmpl = fRND.Gaus (AmplMean, AmplSigma);
+			OnePulse.fAmpl = fSPEAreaPdf->GetRandom() / GetShapeArea();
+			//OnePulse.fAmpl = fRND.Gaus (AmplMean, AmplSigma);
 			TOFe           = fRND.Gaus (TOFeMean, TOFeSigma);
 			OnePulse.fTime = TOFe + time;
 			if (fDebug) cout << " with amplitude = " << OnePulse.fAmpl << " and time =" << OnePulse.fTime/ns << " ns" << endl;
@@ -194,7 +199,7 @@ namespace RED
 		unsigned int DarkNum = fRND.Poisson (fDCR * (endtime - begintime)); // Number of dark counts
 		Pulse DarkPulse;     // Temporary variable for saving each SPE
 		for (unsigned int i = 0; i < DarkNum; i++) {
-			DarkPulse.fAmpl = fRND.Gaus (fAmpl_mean, fAmpl_sigma);
+			DarkPulse.fAmpl = fSPEAreaPdf->GetRandom() / GetShapeArea();
 			DarkPulse.fTime = fRND.Rndm() * (endtime - begintime) + begintime;
 			darkelectrons.push_back (DarkPulse);
 		}
@@ -433,6 +438,11 @@ namespace RED
 	void PMT_R11410::SetAP_peak (Double_t AP_peak) {
 		fAP_peak = AP_peak;
 		cout << "set AP_peak    = " << fAP_peak << endl;
+	}
+
+	void PMT_R11410::SetPdfAreaSPE (TF1 *SPEAreaPdf) {
+		fSPEAreaPdf = SPEAreaPdf;
+		cout << "set SPE Area PDF" << endl;
 	}
 
 	void PMT_R11410::SetShape (TF1* Shape) {

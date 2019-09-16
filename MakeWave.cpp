@@ -3,13 +3,11 @@
 #include <TCanvas.h>
 #include <TH1.h>
 #include <TGraph.h>
-#include "SystemOfUnits.h"
 
 #include "MakeWave.h"
 
 using std::cout;
 using std::endl;
-using CLHEP::ns;
 
 // Simple constructor
 MakeWave::MakeWave () {
@@ -117,7 +115,7 @@ void MakeWave::CreateOutWave () {
 void MakeWave::PrintOutWave() {
 	cout << "Printing OutWave..." << endl;
 	for (int i = 0; i < fNumSamples; i++)
-		cout << fOutWave[i] << "\t(t = " << (fDelay + i*fPeriod)/ns << " ns)" << endl;
+		cout << fOutWave.at(i) << "\t(t = " << (fDelay + i*fPeriod)/ns << " ns)" << endl;
 	cout << "End of OutWave" << endl;
 }
 
@@ -147,10 +145,21 @@ void MakeWave::DrawOutWave () {
 	c1->cd();
 	TGraph  *g1 = new TGraph(fNumSamples);
 	for (int i = 0; i < fNumSamples; i++) {
-		g1->SetPoint(i, (fDelay + i*fPeriod)/ns, fOutWave[i]);
+		g1->SetPoint(i, (fDelay + i*fPeriod)/ns, fOutWave.at(i));
 	}
 	g1->SetTitle("Waveform");
 	g1->Draw();
+}
+
+void MakeWave::SaveOutWave (const char *filename, const char *title) {
+	TCanvas *c1 = new TCanvas();
+	c1->cd();
+	TGraph  *g1 = new TGraph(fNumSamples);
+	for (int i = 0; i < fNumSamples; i++) {
+		g1->SetPoint(i, (fDelay + i*fPeriod)/ns, fOutWave.at(i));
+	}
+	g1->SetTitle(title);
+	g1->SaveAs(filename);
 }
 
 void MakeWave::AddToFile () {
@@ -233,7 +242,7 @@ void MakeWave::AddPulseArray (RED::PMT::PulseArray *Pulses) {
 		// Add SPE to OutWave
 		for (int s = StartSample; s <= FinishSample; s++) {
 			SampleTime = s*fPeriod;
-			fOutWave[s] += PulseAmpl/fGain * fPMT->Eval(SampleTime - PulseTime);
+			fOutWave.at(s) += PulseAmpl/fGain * fPMT->Eval(SampleTime - PulseTime);
 		}
 	}
 }

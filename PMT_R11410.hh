@@ -73,6 +73,7 @@ namespace RED
 			                        double DCR = 0., double AP_cont = 0.) = 0; // Main control parameters
 			virtual void SetShape (TF1     *Shape) = 0; // SPE shape in function form
 			virtual void SetShape (TSpline *Shape) = 0; // SPE shape in spline form
+			virtual void SetPdfAreaSPE (TF1 *SPEAreaPdf) = 0;
 
 		// GETTERS
 			virtual Double_t GetXmax()         const = 0; // Right point of the domain of definition
@@ -131,6 +132,7 @@ namespace RED
 			void SetTOFe_mean  (Double_t TOFe_mean  = 30*ns  );
 			void SetTOFe_sigma (Double_t TOFe_sigma = 3*ns   );
 			void SetAP_peak    (Double_t AP_peak    = 0      );
+			void SetPdfAreaSPE (TF1 *SPEAreaPdf);
 
 		// GETTERS
 			// Get SPE parameters
@@ -201,6 +203,7 @@ namespace RED
 			Double_t fTOFe_1d_mean;    // Time of Flight e- from 1dyn to anode
 			Double_t fTOFe_1d_sigma;   // 0.5*TOF_sigma    
 			TRandom3 fRND;             // Object for random calculations
+			TF1 *fSPEAreaPdf;           // PDF for SPE area distribution
 
 			bool fDebug; //some extended info (just for debug)
 
